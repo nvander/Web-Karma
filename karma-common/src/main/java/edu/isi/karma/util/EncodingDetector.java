@@ -100,9 +100,13 @@ public class EncodingDetector {
         StringWriter sw = new StringWriter();
         
         FileInputStream fis = new FileInputStream(file);
-        logger.debug("Reading file: " + file + " using encoding: " + encoding);
-		encoding = validateEncoding(encoding);	
-        IOUtils.copy(fis, sw, encoding);
+        try{
+	        logger.debug("Reading file: " + file + " using encoding: " + encoding);
+			encoding = validateEncoding(encoding);	
+	        IOUtils.copy(fis, sw, encoding);
+        } finally {
+        	fis.close();
+        }
 
         return sw.toString();
     }

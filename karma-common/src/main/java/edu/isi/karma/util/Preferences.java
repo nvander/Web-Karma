@@ -81,7 +81,12 @@ public abstract class Preferences {
 						  preferencesId + ".json");
 				if(jsonFile.exists()){
 					// Populate from the existing preferences JSON file
-					json = (JSONObject) JSONUtil.createJson(new FileReader(jsonFile));
+					FileReader jsonFileReader = new FileReader(jsonFile);
+					try{
+						json = (JSONObject) JSONUtil.createJson(jsonFileReader);
+					} finally {
+						jsonFileReader.close();
+					}
 					if(json == null) {
 						// If error occurred with preferences file, create a new one
 						logger.error("Preferences file corrupt! Creating new from template.");
