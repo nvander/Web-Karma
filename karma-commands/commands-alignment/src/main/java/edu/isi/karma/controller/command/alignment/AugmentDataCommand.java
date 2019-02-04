@@ -73,7 +73,7 @@ public class AugmentDataCommand extends WorksheetSelectionCommand{
 		newhNodeId = hNodeId;
 		this.incoming = incoming;
 		this.sameAsPredicate = sameAsPredicate;
-		appliedCommands = new Stack<Command>();
+		appliedCommands = new Stack<>();
 		addTag(CommandTag.Transformation);
 	}
 
@@ -121,13 +121,13 @@ public class AugmentDataCommand extends WorksheetSelectionCommand{
 			return c;
 		}
 		HNode hnode = factory.getHNode(hNodeId);
-		List<String> hNodeIds = new LinkedList<String>();
+		List<String> hNodeIds = new LinkedList<>();
 		hNodeIds.add(hNodeId);
 		inputColumns.addAll(hNodeIds);
-		List<Table> dataTables = new ArrayList<Table>();
+		List<Table> dataTables = new ArrayList<>();
 		CloneTableUtils.getDatatable(worksheet.getDataTable(), factory.getHTable(hnode.getHTableId()), dataTables, selection);
-		Map<String, String> rowHashToSubjectURI = new HashMap<String, String>();
-		Map<String, List<String>> SubjectURIToRowId = new HashMap<String, List<String>>();
+		Map<String, String> rowHashToSubjectURI = new HashMap<>();
+		Map<String, List<String>> SubjectURIToRowId = new HashMap<>();
 		for(Table t : dataTables) {
 			for(Row r : t.getRows(0, t.getNumRows(), selection)) {
 				Node n = r.getNode(hNodeId);
@@ -155,11 +155,11 @@ public class AugmentDataCommand extends WorksheetSelectionCommand{
 		TripleStoreUtil util = new TripleStoreUtil();
 
 		//String modelContext = worksheet.getMetadataContainer().getWorksheetProperties().getPropertyValue(Property.modelContext);
-		List<String> subjects = new LinkedList<String>();
+		List<String> subjects = new LinkedList<>();
 		subjects.addAll(rowHashToSubjectURI.values());
-		List<String> predicates = new LinkedList<String>();
-		List<String> otherClasses = new LinkedList<String>();
-		Map<String, List<String>> results = new HashMap<String, List<String>>();
+		List<String> predicates = new LinkedList<>();
+		List<String> otherClasses = new LinkedList<>();
+		Map<String, List<String>> results = new HashMap<>();
 
 		URIFormatter uriFormatter = new URIFormatter(workspace.getOntologyManager(), new ErrorReport());
 		if(sameAsPredicate!= null && !sameAsPredicate.trim().isEmpty())
@@ -175,16 +175,16 @@ public class AugmentDataCommand extends WorksheetSelectionCommand{
 			otherClasses.add(otherClassarray.getJSONObject(i).getString("otherClass"));
 		}
 
-		while (subjects.size() > 0) {
+		while (!subjects.isEmpty()) {
 			ListIterator<String> subjectsIterator = subjects.listIterator();
-			LinkedList<String> tempSubjects = new LinkedList<String>();
-			while(tempSubjects.size() < limit && subjects.size() > 0)
+			LinkedList<String> tempSubjects = new LinkedList<>();
+			while(tempSubjects.size() < limit && !subjects.isEmpty())
 			{
 				tempSubjects.add(subjectsIterator.next());
 				subjectsIterator.remove();
 			}
 			try {
-				Map<String, List<String>> temp = null;
+				Map<String, List<String>> temp;
 				if (!incoming)
 					temp = util.getObjectsForSubjectsAndPredicates(dataRepoUrl, null, tempSubjects , predicates, otherClasses, sameAsPredicate);
 				else
@@ -258,7 +258,7 @@ public class AugmentDataCommand extends WorksheetSelectionCommand{
 				edu.isi.karma.rep.alignment.Node n = alignment.getNodeById(columnUri);
 
 				semanticType.put(ClientJsonKeys.isPrimary.name(), "true");
-				Set<edu.isi.karma.rep.alignment.Node> oldNodes = new HashSet<edu.isi.karma.rep.alignment.Node>(); 
+				Set<edu.isi.karma.rep.alignment.Node> oldNodes = new HashSet<>(); 
 				if(resultClass.get(i).trim().isEmpty())
 				{
 					semanticType.put(ClientJsonKeys.DomainId.name(), n.getId());
@@ -275,7 +275,8 @@ public class AugmentDataCommand extends WorksheetSelectionCommand{
 
 
 				semanticTypesArray.put(semanticType);
-				Command sstCommand = sstFactory.createCommand(model, workspace, worksheetId, nestedHNodeId, false, semanticTypesArray, false, "", selection.getName());
+				Command sstCommand = sstFactory.createCommand(model, workspace, worksheetId, nestedHNodeId, 
+						false, semanticTypesArray, false, "", "", selection.getName());
 				appliedCommands.push(sstCommand);
 				sstCommand.doIt(workspace);
 				if(!resultClass.get(i).trim().isEmpty())
@@ -285,7 +286,7 @@ public class AugmentDataCommand extends WorksheetSelectionCommand{
 					JSONArray newEdges = new JSONArray();
 					JSONObject newEdge = new JSONObject();
 					String sourceId = n.getId();
-					Set<edu.isi.karma.rep.alignment.Node> tempnodes = new HashSet<edu.isi.karma.rep.alignment.Node>();
+					Set<edu.isi.karma.rep.alignment.Node> tempnodes = new HashSet<>();
 					tempnodes.addAll(alignment.getNodesByUri(resultClass.get(i)));
 					tempnodes.removeAll(oldNodes);
 
@@ -294,21 +295,21 @@ public class AugmentDataCommand extends WorksheetSelectionCommand{
 					String targetUri = target.getLabel().getUri();
 					String edgeUri = resultPredicates.get(i);
 					if (!incoming) {
-						newEdge.put(ChangeInternalNodeLinksCommand.JsonKeys.edgeSourceId.name(), sourceId);
-						newEdge.put(ChangeInternalNodeLinksCommand.JsonKeys.edgeTargetId.name(), targetId);
-						newEdge.put(ChangeInternalNodeLinksCommand.JsonKeys.edgeId.name(), edgeUri);
+						newEdge.put(ChangeInternalNodeLinksCommand.LinkJsonKeys.edgeSourceId.name(), sourceId);
+						newEdge.put(ChangeInternalNodeLinksCommand.LinkJsonKeys.edgeTargetId.name(), targetId);
+						newEdge.put(ChangeInternalNodeLinksCommand.LinkJsonKeys.edgeId.name(), edgeUri);
 					}
 					else {
-						newEdge.put(ChangeInternalNodeLinksCommand.JsonKeys.edgeSourceId.name(), targetId);
-						newEdge.put(ChangeInternalNodeLinksCommand.JsonKeys.edgeTargetId.name(), sourceId);
-						newEdge.put(ChangeInternalNodeLinksCommand.JsonKeys.edgeId.name(), edgeUri);
+						newEdge.put(ChangeInternalNodeLinksCommand.LinkJsonKeys.edgeSourceId.name(), targetId);
+						newEdge.put(ChangeInternalNodeLinksCommand.LinkJsonKeys.edgeTargetId.name(), sourceId);
+						newEdge.put(ChangeInternalNodeLinksCommand.LinkJsonKeys.edgeId.name(), edgeUri);
 					}
 					newEdges.put(newEdge);
 					Command changeInternalNodeLinksCommand = cinlcf.createCommand(worksheetId, alignmentId, new JSONArray(), newEdges, model, workspace);
 					changeInternalNodeLinksCommand.doIt(workspace);
 					appliedCommands.push(changeInternalNodeLinksCommand);
 					Command setMetaDataCommand = smpcf.createCommand(model, workspace, nestedHNodeId, worksheetId, "isUriOfClass", 
-							targetUri, targetId, false, "", selection.getName());
+							targetUri, targetId, false, "", "", selection.getName());
 					setMetaDataCommand.doIt(workspace);
 					appliedCommands.push(setMetaDataCommand);
 				}
@@ -340,13 +341,13 @@ public class AugmentDataCommand extends WorksheetSelectionCommand{
 		List<String> resultObjects = results.get("resultObjects");
 		List<String> resultClasses = results.get("resultClasses");
 		if (resultSubjects == null)
-			resultSubjects = new LinkedList<String>();
+			resultSubjects = new LinkedList<>();
 		if (resultPredicates == null)
-			resultPredicates = new LinkedList<String>();
+			resultPredicates = new LinkedList<>();
 		if (resultObjects == null)
-			resultObjects = new LinkedList<String>();
+			resultObjects = new LinkedList<>();
 		if (resultClasses == null)
-			resultClasses = new LinkedList<String>();
+			resultClasses = new LinkedList<>();
 		resultSubjects.addAll(temp.get("resultSubjects"));
 		resultPredicates.addAll(temp.get("resultPredicates"));
 		resultObjects.addAll(temp.get("resultObjects"));

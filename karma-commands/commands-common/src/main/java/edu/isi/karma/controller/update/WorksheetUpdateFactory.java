@@ -36,6 +36,9 @@ import edu.isi.karma.rep.Workspace;
 
 public class WorksheetUpdateFactory {
 
+	private WorksheetUpdateFactory() {
+	}
+
 	public static UpdateContainer createWorksheetHierarchicalAndCleaningResultsUpdates(String worksheetId, SuperSelection sel, String contextId) {
 		UpdateContainer c = new UpdateContainer();
 		createWorksheetHierarchicalAndCleaningResultsUpdates(worksheetId, c, sel, contextId);
@@ -86,7 +89,7 @@ public class WorksheetUpdateFactory {
 		for (Selection sel : worksheet.getSelectionManager().getAllDefinedSelection()) {
 			Set<String> inputColumns = sel.getInputColumns();
 			inputColumns.retainAll(command.getOutputColumns());
-			if (inputColumns.size() > 0 && !command.getCommandName().equals("OperateSelectionCommand") && !command.getCommandName().equals("ClearSelectionCommand"))
+			if (!inputColumns.isEmpty() && !command.getCommandName().equals("OperateSelectionCommand") && !command.getCommandName().equals("ClearSelectionCommand"))
 				sel.invalidateSelection();
 			if (sel.isSelectedRowsMethod() && checkSelection(sel, command, workspace.getFactory())) {
 				sel.invalidateSelection();

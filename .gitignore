@@ -1,3 +1,4 @@
+.history
 *.iml
 atlassian-ide-plugin.xml
 java_pid*.hprof
@@ -93,3 +94,5 @@ karma-offline/karma.out
 karma-mr/src/test/resources/tripleparser/*
 
 karma-mr/src/test/resources/atfLocal.properties
+
+vagrant/.vagrant

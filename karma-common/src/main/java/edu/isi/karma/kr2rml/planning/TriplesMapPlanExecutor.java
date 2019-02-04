@@ -61,11 +61,10 @@ public class TriplesMapPlanExecutor {
 			
 			if(submitPlansIndividually)
 			{
-				List<Future<Boolean>> results = new LinkedList<Future<Boolean>>();
-				results = service.invokeAll(plan.workers);
+				List<Future<Boolean>> results = service.invokeAll(plan.workers);
 				for(Future<Boolean> result : results)
 				{
-					result.get(1, TimeUnit.MINUTES);
+					result.get(10, TimeUnit.MINUTES);
 				}
 			}
 			else
@@ -82,7 +81,7 @@ public class TriplesMapPlanExecutor {
 						}
 						
 					}); 
-				result.get(1, TimeUnit.MINUTES);
+				result.get(10, TimeUnit.MINUTES);
 			}
 			
 		} catch (Exception e) {

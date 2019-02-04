@@ -61,6 +61,7 @@ public abstract class PredicateObjectMappingPlan extends MapPlan {
 	protected boolean isFlipped = false;
 	protected boolean isLiteral;
 	protected String literalTemplateValue;
+	protected String literalLanguage;
 	protected PredicateObjectMap pom; 
 	
 	protected void generateInternal(TemplateTermSet subjectMapTemplate,
@@ -69,13 +70,13 @@ public abstract class PredicateObjectMappingPlan extends MapPlan {
 			throws HNodeNotFoundKarmaException {
 		
 		this.pom = pom;
-		combinedSubjectObjectTermsToPaths = new HashMap<ColumnTemplateTerm, HNodePath>();
+		combinedSubjectObjectTermsToPaths = new HashMap<>();
 		combinedSubjectObjectTermsToPaths.putAll(subjectTermsToPaths);
-		Map<ColumnTemplateTerm, HNodePath> objectTermsToPaths = new HashMap<ColumnTemplateTerm, HNodePath>();
+		Map<ColumnTemplateTerm, HNodePath> objectTermsToPaths = new HashMap<>();
 		
 		populateTermsToPathForSubject(objectTermsToPaths, objectTemplateTermSetPopulator.getTerms());
 		combinedSubjectObjectTermsToPaths.putAll(objectTermsToPaths);
-		LinkedList<ColumnTemplateTerm> objectColumnTerms = new LinkedList<ColumnTemplateTerm>();
+		LinkedList<ColumnTemplateTerm> objectColumnTerms = new LinkedList<>();
 		objectColumnTerms.addAll(objectTemplateTermSetPopulator.getTerms().getAllColumnNameTermElements());
 		complicatedPlan = new SinglyAnchoredTemplateTermSetPopulatorPlan(combinedSubjectObjectTermsToPaths, objectColumnTerms, subjectMapTemplate.getAllColumnNameTermElements(), selection);
 		generatePredicatesForPom(pom);
@@ -83,14 +84,14 @@ public abstract class PredicateObjectMappingPlan extends MapPlan {
 
 	protected void generatePredicatesForPom(PredicateObjectMap pom) throws HNodeNotFoundKarmaException {
 		this.pom = pom;
-		List<ColumnTemplateTerm> subjectAndObjectTemplateTerms = new LinkedList<ColumnTemplateTerm>();
+		List<ColumnTemplateTerm> subjectAndObjectTemplateTerms = new LinkedList<>();
 		subjectAndObjectTemplateTerms.addAll(this.combinedSubjectObjectTermsToPaths.keySet());
-		LinkedList<ColumnTemplateTerm> predicateColumnTemplateTerms = new LinkedList<ColumnTemplateTerm>();
+		LinkedList<ColumnTemplateTerm> predicateColumnTemplateTerms = new LinkedList<>();
 		predicateColumnTemplateTerms.addAll(pom.getPredicate().getTemplate().getAllColumnNameTermElements());
 		predicateTemplateTermSetPopulator = new TemplateTermSetPopulator(pom.getPredicate().getTemplate(), new StringBuilder(), uriFormatter, true, true);
-		Map<ColumnTemplateTerm, HNodePath> combinedSubjectObjectPredicateTermsToPaths = new HashMap<ColumnTemplateTerm, HNodePath>();
+		Map<ColumnTemplateTerm, HNodePath> combinedSubjectObjectPredicateTermsToPaths = new HashMap<>();
 		combinedSubjectObjectPredicateTermsToPaths.putAll(combinedSubjectObjectTermsToPaths);
-		Map<ColumnTemplateTerm, HNodePath> predicateTermsToPaths = new HashMap<ColumnTemplateTerm, HNodePath>();
+		Map<ColumnTemplateTerm, HNodePath> predicateTermsToPaths = new HashMap<>();
 		
 		populateTermsToPathForSubject(predicateTermsToPaths, pom.getPredicate().getTemplate());
 		combinedSubjectObjectTermsToPaths.putAll(predicateTermsToPaths);

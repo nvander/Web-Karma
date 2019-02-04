@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.jgrapht.graph.DirectedWeightedMultigraph;
+import org.python.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,6 +44,7 @@ import edu.isi.karma.modeling.alignment.SemanticModel;
 import edu.isi.karma.modeling.ontology.OntologyManager;
 import edu.isi.karma.rep.alignment.DefaultLink;
 import edu.isi.karma.rep.alignment.InternalNode;
+import edu.isi.karma.rep.alignment.LabeledLink;
 import edu.isi.karma.rep.alignment.Node;
 import edu.isi.karma.webserver.ContextParametersRegistry;
 import edu.isi.karma.webserver.ServletContextParameterMap;
@@ -52,11 +54,12 @@ public abstract class ModelLearningGraph {
 
 	private static Logger logger = LoggerFactory.getLogger(ModelLearningGraph.class);
 	
-	private static ConcurrentHashMap<OntologyManager, ModelLearningGraph> instances = new ConcurrentHashMap<OntologyManager, ModelLearningGraph>();
+	private static ConcurrentHashMap<OntologyManager, ModelLearningGraph> instances = new ConcurrentHashMap<>();
 	protected OntologyManager ontologyManager;
 	protected GraphBuilder graphBuilder;
 	protected NodeIdFactory nodeIdFactory; 
 	protected long lastUpdateTime;
+	protected int totalNumberOfKnownModels;
 	
 	private final String getGraphJsonName()
 	{
@@ -124,6 +127,7 @@ public abstract class ModelLearningGraph {
 	protected ModelLearningGraph(OntologyManager ontologyManager, ModelLearningGraphType type) throws IOException {
 		
 		this.ontologyManager = ontologyManager;
+		this.totalNumberOfKnownModels = 0;
 		
 		File file = new File(getGraphJsonName());
 		if (!file.exists()) {
@@ -187,7 +191,7 @@ public abstract class ModelLearningGraph {
 			this.graphBuilder = new GraphBuilderTopK(ontologyManager, false);
 		this.nodeIdFactory = new NodeIdFactory();
 		
-		Set<InternalNode> addedNodes = new HashSet<InternalNode>();
+		Set<InternalNode> addedNodes = new HashSet<>();
 		Set<InternalNode> temp;
 		File ff = new File(contextParameters.getParameterValue(ContextParameter.JSON_MODELS_DIR));
 		if (ff.exists()) {
@@ -198,7 +202,7 @@ public abstract class ModelLearningGraph {
 					try {
 						SemanticModel model = SemanticModel.readJson(f.getAbsolutePath());
 						if (model != null) {
-							temp = this.addModel(model, false);
+							temp = this.addModel(model, PatternWeightSystem.JWSPaperFormula);
 							if (temp != null) addedNodes.addAll(temp);
 						}
 					} catch (Exception e) {
@@ -237,15 +241,15 @@ public abstract class ModelLearningGraph {
 		}
 	}
 	
-	public abstract Set<InternalNode> addModel(SemanticModel model, boolean useOriginalWeights);
+	public abstract Set<InternalNode> addModel(SemanticModel model, PatternWeightSystem weightSystem);
 
-	public void addModelAndUpdate(SemanticModel model, boolean useOriginalWeights) {
-		this.addModel(model, useOriginalWeights);
+	public void addModelAndUpdate(SemanticModel model, PatternWeightSystem weightSystem) {
+		this.addModel(model, weightSystem);
 		this.updateGraphUsingOntology(model);
 	}
 	
-	public void addModelAndUpdateAndExport(SemanticModel model, boolean useOriginalWeights) {
-		this.addModel(model, useOriginalWeights);
+	public void addModelAndUpdateAndExport(SemanticModel model, PatternWeightSystem weightSystem) {
+		this.addModel(model, weightSystem);
 		this.updateGraphUsingOntology(model);
 		this.exportJson();
 		this.exportGraphviz();
@@ -263,4 +267,30 @@ public abstract class ModelLearningGraph {
 			this.graphBuilder.addClosureAndUpdateLinks(nodes, null);
 	}
 	
+	public boolean contains(DirectedWeightedMultigraph<Node, LabeledLink> graph) {
+		
+		if (graph == null || this.graphBuilder == null || this.graphBuilder.getGraph() == null)
+			return false;
+		
+		Set<String> commonModelIds = null;
+		LabeledLink matchedLink = null;
+		boolean firstVisit = true;
+		for (LabeledLink l : graph.edgeSet()) {
+			matchedLink = this.graphBuilder.getIdToLinkMap().get(l.getId());
+			if (matchedLink == null)
+				return false;
+			if (firstVisit) {
+				commonModelIds = matchedLink.getModelIds();
+				firstVisit = false;
+			} else {
+				if (commonModelIds == null || matchedLink.getModelIds() == null)
+					return false;
+				commonModelIds = Sets.intersection(matchedLink.getModelIds(), commonModelIds);
+				if (commonModelIds.isEmpty()) // no intersection
+					return false;
+			}
+		}
+		
+		return true;
+	}
 }

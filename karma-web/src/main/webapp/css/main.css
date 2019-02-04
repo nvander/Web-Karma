@@ -109,10 +109,31 @@ body {
 	cursor: pointer;
 }
 
-#manualModeHeader a {
+#modeHeader a {
 	color: rgb(255, 255, 150);
 }
 
 .editButton, .hideButton, .deleteButton {
 	padding: 0px 12px;
+}
+
+#propertyDialogRight {
+	height: 500px;
+}
+
+.rdfsLabel {
+	color: #2a627e;
+}
+
+.dialog-list-tab {
+	overflow-wrap: break-word;
+}
+
+.heading {
+	font-weight: bold;
+}
+
+.sem-provenance {
+	width: 10%; 
+	word-break: break-all;
 }

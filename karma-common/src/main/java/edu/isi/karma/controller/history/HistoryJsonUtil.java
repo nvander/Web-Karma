@@ -11,7 +11,10 @@ import edu.isi.karma.controller.command.ICommand.CommandTag;
 import edu.isi.karma.controller.history.CommandHistory.HistoryArguments;
 
 public class HistoryJsonUtil {
-	
+
+	private HistoryJsonUtil() {
+	}
+
 	public enum ClientJsonKeys {
 		isPrimary, name, value, type, SemanticType, id, children
 	}
@@ -32,7 +35,11 @@ public class HistoryJsonUtil {
 	}
 	
 	public static JSONArray getJSONArrayValue(String arg, JSONArray json) throws JSONException {
-		return getJSONObjectWithName(arg, json).getJSONArray(ClientJsonKeys.value.name());
+		JSONObject obj = getJSONObjectWithName(arg, json);
+		if(obj.has(ClientJsonKeys.value.name()))
+			return 	obj.getJSONArray(ClientJsonKeys.value.name());
+		else
+			return new JSONArray();
 	}
 	
 	public static ParameterType getParameterType(JSONObject json) throws JSONException {
@@ -67,6 +74,38 @@ public class HistoryJsonUtil {
 		return file.exists();
 	}
 	
+	public static JSONArray removeCommandsByTag(List<CommandTag> removeFilters,
+			 JSONArray historyJson)
+			throws JSONException {
+		JSONArray commandsJSON = new JSONArray();
+		
+		for (int i = 0; i< historyJson.length(); i++) {
+			JSONObject commObject = (JSONObject) historyJson.get(i);
+			JSONArray tags = commObject.getJSONArray(HistoryArguments.tags.name());
+			boolean match = false;
+			for (int j=0; j< tags.length(); j++) {
+				
+				String tag2 = tags.getString(j);
+				for(CommandTag filter : removeFilters)
+				{
+					if(tag2.equals(filter.name()))
+					{
+						match = true;
+						break;
+					}
+					
+				}
+				if(match)
+				{
+					break;
+				}
+			}
+			if(!match)
+				commandsJSON.put(commObject);
+		}
+		return commandsJSON;
+	}
+	
 	public static JSONArray filterCommandsByTag(List<CommandTag> filters,
 			 JSONArray historyJson)
 			throws JSONException {
@@ -96,6 +135,14 @@ public class HistoryJsonUtil {
 			}
 		}
 		return commandsJSON;
+	}
+	
+	public static JSONObject createParamObject(String name, ParameterType type, Object value) {
+		JSONObject paramObj = new JSONObject();
+		paramObj.put("name", name);
+		paramObj.put("type", type);
+		paramObj.put("value", value);
+		return paramObj;
 	}
 	
 }

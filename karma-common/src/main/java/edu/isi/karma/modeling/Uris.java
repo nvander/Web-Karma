@@ -54,6 +54,10 @@ public abstract class Uris {
 	public static final String DATAPROPERTY_OF_COLUMN_LINK_URI = Namespaces.KARMA_DEV + "dataPropertyOfColumnLink";
 	public static final String OBJECTPROPERTY_SPECIALIZATION_LINK_URI = Namespaces.KARMA_DEV + "objectPropertySpecialization";
 	
+	//SCHEMA.ORG domain and range predicates
+	public static final String SCHEMA_DOMAIN_INCLUDES = Namespaces.SCHEMA + "domainIncludes";
+	public static final String SCHEMA_RANGE_INCLUDES = Namespaces.SCHEMA + "rangeIncludes";
+	
 	// R2RML Vocabulary URIs
 	public static final String RR_TRIPLESMAP_CLASS_URI = Namespaces.RR + "TriplesMap";
 	public static final String RR_SUBJECTMAP_CLASS_URI = Namespaces.RR+ "SubjectMap";
@@ -69,6 +73,7 @@ public abstract class Uris {
 	public static final String RR_OBJECTMAP_URI = Namespaces.RR + "objectMap";
 	public static final String RR_COLUMN_URI = Namespaces.RR + "column";
 	public static final String RR_DATATYPE_URI = Namespaces.RR + "datatype";
+	public static final String RR_LANGUAGE_URI = Namespaces.RR + "language";
 	public static final String RR_LOGICAL_TABLE_URI = Namespaces.RR + "logicalTable";
 	public static final String RR_REF_OBJECT_MAP_CLASS_URI = Namespaces.RR + "RefObjectMap";
 	public static final String RR_PARENT_TRIPLE_MAP_URI = Namespaces.RR + "parentTriplesMap";
@@ -112,7 +117,7 @@ public abstract class Uris {
 	// Linking related URIs
 	public static final String KM_LINKING_MATCHES_URI = Namespaces.KARMA_DEV + "possibleLinkingMatches";
 	
-	public static final List<String> Uris = new ArrayList<String>();
+	public static final List<String> Uris = new ArrayList<>();
 	static {
 		List<Field> staticFields = new ArrayList<>();
 	    Field[] allFields = Uris.class.getDeclaredFields();

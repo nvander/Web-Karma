@@ -52,7 +52,7 @@ public class OntologyManager  {
 		this.contextId = contextId;
 		ontHandler = new OntologyHandler();
 		ontCache = new OntologyCache(ontHandler, contextId);
-		ontUpdateListeners = new ArrayList<OntologyUpdateListener>();	
+		ontUpdateListeners = new ArrayList<>();	
 	}
 	
 	public String getContextId()
@@ -146,12 +146,23 @@ public class OntologyManager  {
 			return false;
 		}
 		
+		/***
+		 *  values for lang are 
+			"RDF/XML", 
+			"N-TRIPLE", 
+			"TURTLE" (or "TTL") and 
+			"N3". 
+			null represents the default language, "RDF/XML". 
+			"RDF/XML-ABBREV" is a synonym for "RDF/XML". 
+		 */
 		
 		InputStreamReader s = EncodingDetector.getInputStreamReader(sourceFile, encoding);
 		if (Files.getFileExtension(sourceFile.getName()).equalsIgnoreCase("N3"))
 			ontHandler.getOntModel().read(s, null, "N3");
 		else if (Files.getFileExtension(sourceFile.getName()).equalsIgnoreCase("TTL"))
 			ontHandler.getOntModel().read(s, null, "TURTLE");
+		else if (Files.getFileExtension(sourceFile.getName()).equalsIgnoreCase("NT"))
+			ontHandler.getOntModel().read(s, null, "N-TRIPLE");
 		else
 			ontHandler.getOntModel().read(s, null); // default lang = "RDF/XML"
 		
@@ -238,8 +249,8 @@ public class OntologyManager  {
 	
 	public HashSet<String> getPossibleUris(String sourceUri, String targetUri) {
 
-		HashSet<String> linkUris = 
-				new HashSet<String>();
+		HashSet<String> linkUris =
+				new HashSet<>();
 
 		HashSet<String> objectPropertiesDirect;
 		HashSet<String> objectPropertiesIndirect;
@@ -354,7 +365,7 @@ public class OntologyManager  {
 	 */
 	public HashSet<String> getDomainsOfProperty(String propertyUri, boolean recursive) {
 
-		HashSet<String> results = new HashSet<String>();
+		HashSet<String> results = new HashSet<>();
 		HashSet<String> direct = null;
 		HashSet<String> indirect = null;
 		
@@ -376,7 +387,7 @@ public class OntologyManager  {
 	 */
 	public HashSet<String> getRangesOfProperty(String propertyUri, boolean recursive) {
 
-		HashSet<String> results = new HashSet<String>();
+		HashSet<String> results = new HashSet<>();
 		HashSet<String> direct = null;
 		HashSet<String> indirect = null;
 		
@@ -400,7 +411,7 @@ public class OntologyManager  {
 	public HashSet<String> getDomainsGivenRange(String rangeUri, boolean recursive) {
 		
 		HashSet<String> objectProperties = ontCache.getDirectInObjectProperties().get(rangeUri);
-		HashSet<String> results = new HashSet<String>();
+		HashSet<String> results = new HashSet<>();
 		HashSet<String> direct = null;
 		HashSet<String> indirect = null;
 		
@@ -443,7 +454,7 @@ public class OntologyManager  {
 					objectProperties = propRecursive;
 			}
 		}
-		HashMap<String, Label> results = new HashMap<String, Label>();
+		HashMap<String, Label> results = new HashMap<>();
 		HashSet<String> direct = null;
 		HashSet<String> indirect = null;
 		
@@ -485,7 +496,7 @@ public class OntologyManager  {
 	
 	
 	public Map<String, Label> getObjectPropertiesByDomain(String domainUri, boolean recursive) {
-		HashSet<String> all = new HashSet<String>();
+		HashSet<String> all = new HashSet<>();
 		HashSet<String> objectProperties = ontCache.getDirectOutObjectProperties().get(domainUri);
 		if(objectProperties != null)
 			all.addAll(objectProperties);
@@ -494,7 +505,7 @@ public class OntologyManager  {
 			if(propRecursive != null)
 				all.addAll(propRecursive);
 		}
-		HashMap<String, Label> results = new HashMap<String, Label>();
+		HashMap<String, Label> results = new HashMap<>();
 		
 		for (String op : all) {
 			results.put(op, ontCache.getPropertyLabel(op));
@@ -504,7 +515,7 @@ public class OntologyManager  {
 	}
 	
 	public Map<String, Label> getObjectPropertiesByRange(String rangeUri, boolean recursive) {
-		HashSet<String> all = new HashSet<String>();
+		HashSet<String> all = new HashSet<>();
 		HashSet<String> objectProperties = ontCache.getDirectInObjectProperties().get(rangeUri);
 		if(objectProperties != null)
 			all.addAll(objectProperties);
@@ -513,7 +524,7 @@ public class OntologyManager  {
 			if(propRecursive != null)
 				all.addAll(propRecursive);
 		}
-		HashMap<String, Label> results = new HashMap<String, Label>();
+		HashMap<String, Label> results = new HashMap<>();
 		
 		for (String op : all) {
 			results.put(op, ontCache.getPropertyLabel(op));
@@ -523,7 +534,7 @@ public class OntologyManager  {
 	}
 	
 	public Map<String, Label> getDataPropertiesByDomain(String domainUri, boolean recursive) {
-		HashSet<String> all = new HashSet<String>();
+		HashSet<String> all = new HashSet<>();
 		HashSet<String> dataProperties = ontCache.getDirectOutDataProperties().get(domainUri);
 		if(dataProperties != null)
 			all.addAll(dataProperties);
@@ -532,7 +543,7 @@ public class OntologyManager  {
 			if(propRecursive != null)
 				all.addAll(propRecursive);
 		}
-		HashMap<String, Label> results = new HashMap<String, Label>();
+		HashMap<String, Label> results = new HashMap<>();
 		
 		for (String op : all) {
 			results.put(op, ontCache.getPropertyLabel(op));
@@ -543,11 +554,11 @@ public class OntologyManager  {
 	
 	public Map<String, String> getPrefixMap () {
 		Map<String, String> nsMap = ontHandler.getOntModel().getNsPrefixMap();
-		Map<String, String> prefixMap = new HashMap<String, String>();
+		Map<String, String> prefixMap = new HashMap<>();
 		
-		for(String ns: nsMap.keySet()) {
-			if (!ns.equals("") && !prefixMap.containsKey(nsMap.get(ns)))
-				prefixMap.put(nsMap.get(ns), ns);
+		for(Map.Entry<String, String> stringStringEntry : nsMap.entrySet()) {
+			if (!stringStringEntry.getKey().equals("") && !prefixMap.containsKey(stringStringEntry.getValue()))
+				prefixMap.put(stringStringEntry.getValue(), stringStringEntry.getKey());
 		}
 		return prefixMap;
 	}
@@ -563,7 +574,7 @@ public class OntologyManager  {
 		HashMap<String, Label> direct = ontCache.getDirectSubClasses().get(classUri);
 		if (!recursive) return direct;
 		
-		HashMap<String, Label> all = new HashMap<String, Label>();
+		HashMap<String, Label> all = new HashMap<>();
 		HashMap<String, Label> indirect = ontCache.getIndirectSubClasses().get(classUri);
 		if (direct != null) all.putAll(direct);
 		if (indirect != null) all.putAll(indirect);
@@ -581,7 +592,7 @@ public class OntologyManager  {
 		HashMap<String, Label> direct = ontCache.getDirectSuperClasses().get(classUri);
 		if (!recursive) return direct;
 		
-		HashMap<String, Label> all = new HashMap<String, Label>();
+		HashMap<String, Label> all = new HashMap<>();
 		HashMap<String, Label> indirect = ontCache.getIndirectSuperClasses().get(classUri);
 		if (direct != null) all.putAll(direct);
 		if (indirect != null) all.putAll(indirect);
@@ -599,7 +610,7 @@ public class OntologyManager  {
 		HashMap<String, Label> direct = ontCache.getDirectSubProperties().get(propertyUri);
 		if (!recursive) return direct;
 		
-		HashMap<String, Label> all = new HashMap<String, Label>();
+		HashMap<String, Label> all = new HashMap<>();
 		HashMap<String, Label> indirect = ontCache.getIndirectSubProperties().get(propertyUri);
 		if (direct != null) all.putAll(direct);
 		if (indirect != null) all.putAll(indirect);
@@ -618,7 +629,7 @@ public class OntologyManager  {
 		HashMap<String, Label> direct = ontCache.getDirectSuperProperties().get(propertyUri);
 		if (!recursive) return direct;
 		
-		HashMap<String, Label> all = new HashMap<String, Label>();
+		HashMap<String, Label> all = new HashMap<>();
 		HashMap<String, Label> indirect = ontCache.getIndirectSuperProperties().get(propertyUri);
 		if (direct != null) all.putAll(direct);
 		if (indirect != null) all.putAll(indirect);
@@ -683,7 +694,7 @@ public class OntologyManager  {
 		
 		HashSet<String> directOutProperties;
 		HashSet<String> indirectOutProperties;
-		HashSet<String> results = new HashSet<String>();
+		HashSet<String> results = new HashSet<>();
 
 		directOutProperties = this.ontCache.getDirectOutObjectProperties().get(domainUri);
 		if (directOutProperties != null)
@@ -706,7 +717,7 @@ public class OntologyManager  {
 		
 		HashSet<String> directInProperties;
 		HashSet<String> indirectInProperties;
-		HashSet<String> results = new HashSet<String>();
+		HashSet<String> results = new HashSet<>();
 		
 		directInProperties = this.ontCache.getDirectInObjectProperties().get(rangeUri);
 		if (directInProperties != null)
@@ -728,7 +739,7 @@ public class OntologyManager  {
 		if (sourceUri == null || targetUri == null) return false;
 //		return this.ontCache.getConnectedByDirectProperties().contains(sourceUri + targetUri);
 		HashSet<String> directProperties = this.ontCache.getDomainRangeToDirectProperties().get(sourceUri+targetUri);
-		if (directProperties != null && directProperties.size() > 0) { 
+		if (directProperties != null && !directProperties.isEmpty()) { 
 			return true;
 		}
 		return false;
@@ -739,7 +750,7 @@ public class OntologyManager  {
 		if (sourceUri == null || targetUri == null) return false;
 //		return this.ontCache.getConnectedByIndirectProperties().contains(sourceUri + targetUri);
 		HashSet<String> indirectProperties = this.ontCache.getDomainRangeToIndirectProperties().get(sourceUri+targetUri);
-		if (indirectProperties != null && indirectProperties.size() > 0) { 
+		if (indirectProperties != null && !indirectProperties.isEmpty()) { 
 			return true;
 		}
 		return false;
@@ -782,6 +793,16 @@ public class OntologyManager  {
 	public boolean isConnectedByDomainlessAndRangelessProperty(String sourceUri, String targetUri) {
 		
 		if (sourceUri == null || targetUri == null) return false;
-		return (this.ontCache.getObjectPropertiesWithoutDomainAndRange().size() > 0);
+		return (!this.ontCache.getObjectPropertiesWithoutDomainAndRange().isEmpty());
 	}
+	
+//	public static void main(String[] args) throws IOException {
+//		ServletContextParameterMap contextParameters = ContextParametersRegistry.getInstance().registerByKarmaHome("/Users/mohsen/karma-rodi/");
+//		contextParameters.setParameterValue(ContextParameter.USER_CONFIG_DIRECTORY, "/Users/mohsen/karma-rodi/config");
+//		OntologyManager ontManager = new OntologyManager(contextParameters.getId());
+//		ontManager.doImport(new File("/Users/mohsen/karma-rodi/preloaded-ontologies/schema.nt"), "UTF-8");
+//		ontManager.updateCache();
+//		System.out.println("done.");
+//	}
 }
+

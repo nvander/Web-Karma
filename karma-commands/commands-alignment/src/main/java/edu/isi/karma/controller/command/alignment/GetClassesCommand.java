@@ -37,7 +37,7 @@ public class GetClassesCommand extends WorksheetCommand {
 	}
 
 	private enum JsonKeys {
-		updateType, nodeLabel, nodeId, nodes, nodeUri
+		updateType, nodeLabel, nodeId, nodes, nodeUri, nodeRDFSLabel
 	}
 
 	private String propertyURI;
@@ -96,6 +96,7 @@ public class GetClassesCommand extends WorksheetCommand {
 						nodeObj.put(JsonKeys.nodeLabel.name(), label.getDisplayName());
 						nodeObj.put(JsonKeys.nodeId.name(), label.getUri());
 						nodeObj.put(JsonKeys.nodeUri.name(), label.getUri());
+						nodeObj.put(JsonKeys.nodeRDFSLabel.name(), label.getRdfsLabel());
 						nodesArray.put(nodeObj);
 					}
 					obj.put(JsonKeys.nodes.name(), nodesArray);
@@ -106,7 +107,7 @@ public class GetClassesCommand extends WorksheetCommand {
 		}
 
 		if (nodeSet == null) {
-			nodeSet = new HashMap<Node,Boolean>();
+			nodeSet = new HashMap<>();
 		}
 		final Map<Node,Boolean> finalNodeSet = nodeSet;
 
@@ -129,7 +130,7 @@ public class GetClassesCommand extends WorksheetCommand {
 						String nodeLabelStr = node.getDisplayId();
 
 						Label nodeLabel = node.getLabel();
-						if (nodeLabel.getUri() !=null && nodeLabel.getNs() != null 
+						if (nodeLabel.getUri() != null && nodeLabel.getNs() != null 
 								&& nodeLabel.getUri().equalsIgnoreCase(nodeLabel.getNs())) {
 							nodeLabelStr = node.getId();
 						} else if(nodeLabel.getPrefix() == null && nodeLabel.getUri() != null) {
@@ -140,6 +141,7 @@ public class GetClassesCommand extends WorksheetCommand {
 						nodeObj.put(JsonKeys.nodeLabel.name(), nodeLabelStr);
 						nodeObj.put(JsonKeys.nodeId.name(), node.getId());
 						nodeObj.put(JsonKeys.nodeUri.name(), nodeLabel.getUri());
+						nodeObj.put(JsonKeys.nodeRDFSLabel.name(), nodeLabel.getRdfsLabel());
 						nodesArray.put(nodeObj);
 					}
 
@@ -167,7 +169,7 @@ public class GetClassesCommand extends WorksheetCommand {
 	private Map<Node,Boolean> getClassesInModel(Workspace workspace) {
 		final Alignment alignment = AlignmentManager.Instance().getAlignment(
 				workspace.getId(), worksheetId);
-		Map<Node,Boolean> nodeSet = new HashMap<Node,Boolean>();
+		Map<Node,Boolean> nodeSet = new HashMap<>();
 		Set<Node> treeNodes = alignment.getSteinerTree().vertexSet();
 		if (treeNodes != null) {
 			for (Node n : treeNodes) {
@@ -181,7 +183,7 @@ public class GetClassesCommand extends WorksheetCommand {
 		final OntologyManager ontMgr = workspace.getOntologyManager();
 		final HashSet<String> domains = ontMgr.getDomainsOfProperty(
 				propertyURI, true);
-		if (domains == null || domains.size() == 0) {
+		if (domains == null || domains.isEmpty()) {
 			return null;
 		}
 
@@ -198,12 +200,12 @@ public class GetClassesCommand extends WorksheetCommand {
 	}
 
 	private Map<Node, Boolean> getNodesUsingAlignment(Workspace workspace, Set<Label> nodeLabels) {
-		Map<Node,Boolean> nodeSet = new HashMap<Node,Boolean>();
+		Map<Node,Boolean> nodeSet = new HashMap<>();
 		
 		final Alignment alignment = AlignmentManager.Instance().getAlignment(
 				workspace.getId(), worksheetId);
 
-		final Set<String> steinerTreeNodeIds = new HashSet<String>();
+		final Set<String> steinerTreeNodeIds = new HashSet<>();
 
 		if (alignment != null && !alignment.isEmpty()) {
 			for (Node node: alignment.getSteinerTree().vertexSet()) {
@@ -239,7 +241,7 @@ public class GetClassesCommand extends WorksheetCommand {
 			// Populate the graph nodes also
 			if (alignment != null) {
 				Set<Node> graphNodes = alignment.getNodesByUri(nodeUri);
-				if (graphNodes != null && graphNodes.size() != 0) {
+				if (graphNodes != null && !graphNodes.isEmpty()) {
 					for (Node graphNode: graphNodes) {
 						if (steinerTreeNodeIds.contains(graphNode.getId())) {
 							nodeSet.put(graphNode, true);

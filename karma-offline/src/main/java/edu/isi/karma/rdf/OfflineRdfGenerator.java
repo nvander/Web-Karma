@@ -130,7 +130,7 @@ public class OfflineRdfGenerator {
 	public OfflineRdfGenerator(CommandLine cl)
 	{
 
-		this.writers = new LinkedList<KR2RMLRDFWriter>();
+		this.writers = new LinkedList<>();
 		parseCommandLineOptions(cl);	
 	}
 
@@ -150,7 +150,7 @@ public class OfflineRdfGenerator {
 			generator.generate();
 			long end = System.currentTimeMillis();
 			
-			logger.info("Time to generate RDF:" + ((float)(end-start))/(1000*60) + " mins");
+			logger.info("Time to generate RDF:" + (float) (end-start) /(1000*60) + " mins");
 
 		} catch (Exception e) {
 			logger.error("Error occured while generating RDF!", e);
@@ -181,7 +181,7 @@ public class OfflineRdfGenerator {
 			generateRdfFromFile();
 		}
 
-		logger.info("done after {}", (System.currentTimeMillis() - l));
+		logger.info("done after {}", System.currentTimeMillis() - l);
 		if(outputFilePath != null)
 		{
 			logger.info("RDF published at: " + outputFilePath);
@@ -243,10 +243,10 @@ public class OfflineRdfGenerator {
 			rootTripleMap = "";
 		}
 		if (killTripleMap == null) {
-			this.killTripleMap = new ArrayList<String>();
+			this.killTripleMap = new ArrayList<>();
 		}
 		else {
-			this.killTripleMap = new ArrayList<String>(Arrays.asList(killTripleMap.split(",")));
+			this.killTripleMap = new ArrayList<>(Arrays.asList(killTripleMap.split(",")));
 			int size = this.killTripleMap.size();
 			for (int i = 0; i < size; i++) {
 				String t = this.killTripleMap.remove(0);
@@ -254,10 +254,10 @@ public class OfflineRdfGenerator {
 			}
 		}
 		if (stopTripleMap == null) {
-			this.stopTripleMap = new ArrayList<String>();
+			this.stopTripleMap = new ArrayList<>();
 		}
 		else {
-			this.stopTripleMap = new ArrayList<String>(Arrays.asList(stopTripleMap.split(",")));
+			this.stopTripleMap = new ArrayList<>(Arrays.asList(stopTripleMap.split(",")));
 			int size = this.stopTripleMap.size();
 			for (int i = 0; i < size; i++) {
 				String t = this.stopTripleMap.remove(0);
@@ -265,10 +265,10 @@ public class OfflineRdfGenerator {
 			}
 		}
 		if (POMToKill == null) {
-			this.POMToKill = new ArrayList<String>();
+			this.POMToKill = new ArrayList<>();
 		}
 		else {
-			this.POMToKill = new ArrayList<String>(Arrays.asList(POMToKill.split(",")));
+			this.POMToKill = new ArrayList<>(Arrays.asList(POMToKill.split(",")));
 			int size = this.POMToKill.size();
 			for (int i = 0; i < size; i++) {
 				String t = this.POMToKill.remove(0);
@@ -317,9 +317,10 @@ public class OfflineRdfGenerator {
 				&& !inputType.equalsIgnoreCase("JSON")
 				&& !inputType.equalsIgnoreCase("SQL")
 				&& !inputType.equalsIgnoreCase("AVRO")
+				&& !inputType.equalsIgnoreCase("JL")
 				) {
 			logger.error("Invalid source type: " + inputType
-					+ ". Please choose from: DB, SQL, CSV, XML, JSON, AVRO.");
+					+ ". Please choose from: DB, SQL, CSV, XML, JSON, AVRO, JL.");
 			return false;
 		}
 		return true;
@@ -379,7 +380,8 @@ public class OfflineRdfGenerator {
 		if (baseURI != null && !baseURI.trim().isEmpty())
 			return;
 		try {
-			Model model = WorksheetR2RMLJenaModelParser.loadSourceModelIntoJenaModel(modelURL);
+			R2RMLMappingIdentifier modelIdentifier = new R2RMLMappingIdentifier(modelURL.toString(), modelURL, null);
+			Model model = WorksheetR2RMLJenaModelParser.loadSourceModelIntoJenaModel(modelIdentifier);
 			Property rdfTypeProp = model.getProperty(Uris.RDF_TYPE_URI);
 			Property baseURIProp = model.getProperty(Uris.KM_HAS_BASEURI);
 			RDFNode node = model.getResource(Uris.KM_R2RML_MAPPING_URI);
@@ -409,15 +411,15 @@ public class OfflineRdfGenerator {
 		ContextIdentifier contextId = null;
 		if (contextURL != null) {
 			
-			contextId = new ContextIdentifier(contextURL.getQuery(), contextURL);
+			contextId = new ContextIdentifier(contextURL.getQuery(), contextURL, null);
 		}
 		if(inputType.equals("DB")) {
-			R2RMLMappingIdentifier id = new R2RMLMappingIdentifier(tablename, modelURL);
+			R2RMLMappingIdentifier id = new R2RMLMappingIdentifier(tablename, modelURL, null);
 			createWriters();
 			dbRdfGen.generateRDFFromTable(tablename, topkrows, writers, id, contextId, baseURI);
 		} else {
 			String query = loadQueryFromFile();
-			R2RMLMappingIdentifier id = new R2RMLMappingIdentifier(modelURL.toString(), modelURL);
+			R2RMLMappingIdentifier id = new R2RMLMappingIdentifier(modelURL.toString(), modelURL, null);
 			createWriters();
 			dbRdfGen.generateRDFFromSQL(query, writers, id, contextId, baseURI);
 		}
@@ -555,7 +557,7 @@ public class OfflineRdfGenerator {
 			logger.error("Unable to generate RDF from file because of invalid configuration");
 			return;
 		}
-		R2RMLMappingIdentifier id = new R2RMLMappingIdentifier(sourceName, modelURL);
+		R2RMLMappingIdentifier id = new R2RMLMappingIdentifier(sourceName, modelURL, null);
 
 		createWriters();
 		GenericRDFGenerator rdfGenerator = new GenericRDFGenerator(selectionName);
@@ -570,6 +572,8 @@ public class OfflineRdfGenerator {
 			inputType = InputType.XML;
 		else if(this.inputType.equalsIgnoreCase("AVRO"))
 			inputType = InputType.AVRO;
+		else if(this.inputType.equalsIgnoreCase("JL"))
+			inputType = InputType.JL;
 		Model model = rdfGenerator.getModelParser(sourceName).getModel();
 		if (rootTripleMap != null && !rootTripleMap.isEmpty()) {
 			StmtIterator itr = model.listStatements(null, model.getProperty(Uris.KM_NODE_ID_URI), rootTripleMap);
@@ -602,7 +606,7 @@ public class OfflineRdfGenerator {
 		request.setStrategy(new UserSpecifiedRootStrategy(rootTripleMap));
 		request.setContextParameters(contextParameters);
 		if (contextURL != null) {
-			ContextIdentifier contextId = new ContextIdentifier(contextURL.getQuery(), contextURL);
+			ContextIdentifier contextId = new ContextIdentifier(contextURL.getQuery(), contextURL, null);
 			rdfGenerator.addContext(contextId);
 			request.setContextName(contextURL.getQuery());
 		}

@@ -42,9 +42,8 @@ public abstract class TestRdfGenerator {
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
 
-		contextParameters = new ServletContextParameterMap(null);
 		ContextParametersRegistry contextParametersRegistry = ContextParametersRegistry.getInstance();
-		contextParametersRegistry.register(contextParameters);
+		contextParameters = contextParametersRegistry.registerByKarmaHome(null);
 		
         KarmaMetadataManager userMetadataManager = new KarmaMetadataManager(contextParameters);
         UpdateContainer uc = new UpdateContainer();
@@ -82,13 +81,13 @@ public abstract class TestRdfGenerator {
 
 	protected List<KR2RMLRDFWriter> createBasicWriter(PrintWriter pw) {
 		N3KR2RMLRDFWriter writer = new N3KR2RMLRDFWriter(new URIFormatter(), pw);
-		List<KR2RMLRDFWriter> writers = new LinkedList<KR2RMLRDFWriter>();
+		List<KR2RMLRDFWriter> writers = new LinkedList<>();
 		writers.add(writer);
 		return writers;
 	}
 	
 	protected HashSet<String> getFileContent(File file) {
-		HashSet<String> hashSet = new HashSet<String>();
+		HashSet<String> hashSet = new HashSet<>();
 		
 		try {
 			String encoding = EncodingDetector.detect(file);
@@ -113,7 +112,7 @@ public abstract class TestRdfGenerator {
 	
 
 	protected HashSet<String> getHashSet(String[] array) {
-		HashSet<String> hashSet = new HashSet<String>();
+		HashSet<String> hashSet = new HashSet<>();
 		for (int i = 0; i < array.length; i++) {
 			String line = array[i].trim();
 			if (line.length() > 0)

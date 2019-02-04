@@ -164,7 +164,7 @@ public class ModelLearner_Old {
 
 	public List<SortableSemanticModel_Old> hypothesize(boolean useCorrectTypes, int numberOfCRFCandidates) {
 
-		Set<Node> addedNodes = new HashSet<Node>(); //They should be deleted from the graph after computing the semantic models
+		Set<Node> addedNodes = new HashSet<>(); //They should be deleted from the graph after computing the semantic models
 
 		logger.info("finding candidate steiner sets ... ");
 		CandidateSteinerSets candidateSteinerSets = getCandidateSteinerSets(columnNodes, useCorrectTypes, numberOfCRFCandidates, addedNodes);
@@ -186,7 +186,7 @@ public class ModelLearner_Old {
 
 
 		logger.info("computing steiner trees ...");
-		List<SortableSemanticModel_Old> sortableSemanticModels = new ArrayList<SortableSemanticModel_Old>();
+		List<SortableSemanticModel_Old> sortableSemanticModels = new ArrayList<>();
 		int count = 1;
 		for (SteinerNodes sn : candidateSteinerSets.getSteinerSets()) {
 			logger.debug("computing steiner tree for steiner nodes set " + count + " ...");
@@ -212,10 +212,10 @@ public class ModelLearner_Old {
 //		logger.info("results are ready ...");
 //		return sortableSemanticModels;
 
-		List<SortableSemanticModel_Old> uniqueModels = new ArrayList<SortableSemanticModel_Old>();
+		List<SortableSemanticModel_Old> uniqueModels = new ArrayList<>();
 		SortableSemanticModel_Old current, previous;
 		if (sortableSemanticModels != null) {
-			if (sortableSemanticModels.size() > 0)
+			if (!sortableSemanticModels.isEmpty())
 				uniqueModels.add(sortableSemanticModels.get(0));
 			for (int i = 1; i < sortableSemanticModels.size(); i++) {
 				current = sortableSemanticModels.get(i);
@@ -233,16 +233,16 @@ public class ModelLearner_Old {
 
 	private DirectedWeightedMultigraph<Node, LabeledLink> computeSteinerTree(Set<Node> steinerNodes) {
 
-		if (steinerNodes == null || steinerNodes.size() == 0) {
+		if (steinerNodes == null || steinerNodes.isEmpty()) {
 			logger.error("There is no steiner node.");
 			return null;
 		}
 
 		//		System.out.println(steinerNodes.size());
-		List<Node> steinerNodeList = new ArrayList<Node>(steinerNodes); 
+		List<Node> steinerNodeList = new ArrayList<>(steinerNodes); 
 
 		long start = System.currentTimeMillis();
-		UndirectedGraph<Node, DefaultLink> undirectedGraph = new AsUndirectedGraph<Node, DefaultLink>(this.graphBuilder.getGraph());
+		UndirectedGraph<Node, DefaultLink> undirectedGraph = new AsUndirectedGraph<>(this.graphBuilder.getGraph());
 
 		logger.debug("computing steiner tree ...");
 		SteinerTree steinerTree = new SteinerTree(undirectedGraph, steinerNodeList);
@@ -276,11 +276,11 @@ public class ModelLearner_Old {
 		CandidateSteinerSets candidateSteinerSets = new CandidateSteinerSets(maxNumberOfSteinerNodes, ontologyManager.getContextId());
 
 		if (addedNodes == null) 
-			addedNodes = new HashSet<Node>();
+			addedNodes = new HashSet<>();
 
 		Set<SemanticTypeMapping> tempSemanticTypeMappings;
-		HashMap<ColumnNode, List<SemanticType>> columnSemanticTypes = new HashMap<ColumnNode, List<SemanticType>>();
-		HashMap<String, Integer> semanticTypesCount = new HashMap<String, Integer>();
+		HashMap<ColumnNode, List<SemanticType>> columnSemanticTypes = new HashMap<>();
+		HashMap<String, Integer> semanticTypesCount = new HashMap<>();
 		List<SemanticType> candidateSemanticTypes;
 		String domainUri = "", propertyUri = "";
 
@@ -312,7 +312,7 @@ public class ModelLearner_Old {
 
 			logger.info("===== Column: " + n.getColumnName());
 
-			Set<SemanticTypeMapping> semanticTypeMappings = new HashSet<SemanticTypeMapping>();
+			Set<SemanticTypeMapping> semanticTypeMappings = new HashSet<>();
 			for (SemanticType semanticType: candidateSemanticTypes) {
 
 				logger.info("\t===== Semantic Type: " + semanticType.getModelLabelString());
@@ -364,9 +364,9 @@ public class ModelLearner_Old {
 		logger.debug("finding matches for semantic type in the graph ... ");
 
 		if (addedNodes == null)
-			addedNodes = new HashSet<Node>();
+			addedNodes = new HashSet<>();
 
-		Set<SemanticTypeMapping> mappings = new HashSet<SemanticTypeMapping>();
+		Set<SemanticTypeMapping> mappings = new HashSet<>();
 
 		if (semanticType == null) {
 			logger.error("semantic type is null.");
@@ -440,7 +440,7 @@ public class ModelLearner_Old {
 
 
 				String nodeId = new RandomGUID().toString();
-				ColumnNode target = new ColumnNode(nodeId, nodeId, sourceColumn.getColumnName(), null);
+				ColumnNode target = new ColumnNode(nodeId, nodeId, sourceColumn.getColumnName(), null, null);
 				if (!this.graphBuilder.addNode(target)) continue;;
 				addedNodes.add(target);
 
@@ -461,7 +461,7 @@ public class ModelLearner_Old {
 		logger.debug("adding semantic type to the graph ... ");
 
 		if (addedNodes == null) 
-			addedNodes = new HashSet<Node>();
+			addedNodes = new HashSet<>();
 
 		if (semanticType == null) {
 			logger.error("semantic type is null.");
@@ -503,7 +503,7 @@ public class ModelLearner_Old {
 		if (!this.graphBuilder.addNodeAndUpdate(source, addedNodes)) return null;
 
 		nodeId = new RandomGUID().toString();
-		ColumnNode target = new ColumnNode(nodeId, nodeId, sourceColumn.getColumnName(), null);
+		ColumnNode target = new ColumnNode(nodeId, nodeId, sourceColumn.getColumnName(), null, null);
 		if (!this.graphBuilder.addNode(target)) return null;
 		addedNodes.add(target);
 
@@ -524,15 +524,15 @@ public class ModelLearner_Old {
 
 	private void updateWeights() {
 
-		List<DefaultLink> oldLinks = new ArrayList<DefaultLink>();
+		List<DefaultLink> oldLinks = new ArrayList<>();
 
-		List<Node> sources = new ArrayList<Node>();
-		List<Node> targets = new ArrayList<Node>();
-		List<LabeledLink> newLinks = new ArrayList<LabeledLink>();
-		List<Double> weights = new ArrayList<Double>();
+		List<Node> sources = new ArrayList<>();
+		List<Node> targets = new ArrayList<>();
+		List<LabeledLink> newLinks = new ArrayList<>();
+		List<Double> weights = new ArrayList<>();
 
-		HashMap<String, LinkFrequency> sourceTargetLinkFrequency = 
-				new HashMap<String, LinkFrequency>();
+		HashMap<String, LinkFrequency> sourceTargetLinkFrequency =
+				new HashMap<>();
 
 		LinkFrequency lf1, lf2;
 
@@ -685,7 +685,7 @@ public class ModelLearner_Old {
 		//		if (true)
 		//			return;
 
-		List<SemanticModel> trainingData = new ArrayList<SemanticModel>();
+		List<SemanticModel> trainingData = new ArrayList<>();
 
 		OntologyManager ontologyManager = new OntologyManager(contextParameters.getId());
 		File ff = new File(Params.ONTOLOGY_DIR);
@@ -766,8 +766,8 @@ public class ModelLearner_Old {
 				long start = System.currentTimeMillis();
 
 				String graphName = !iterativeEvaluation?
-						graphPath + semanticModels.get(newSourceIndex).getName() + Params.GRAPH_FILE_EXT : 
-							graphPath + semanticModels.get(newSourceIndex).getName() + ".knownModels=" + numberOfKnownModels + Params.GRAPH_FILE_EXT;
+						graphPath + semanticModels.get(newSourceIndex).getName() + Params.GRAPH_JSON_FILE_EXT : 
+							graphPath + semanticModels.get(newSourceIndex).getName() + ".knownModels=" + numberOfKnownModels + Params.GRAPH_JSON_FILE_EXT;
 
 				if (new File(graphName).exists()) {
 					// read graph from file
@@ -783,7 +783,7 @@ public class ModelLearner_Old {
 				{
 					logger.info("building the graph ...");
 					for (SemanticModel sm : trainingData)
-						modelLearningGraph.addModel(sm, false);
+						modelLearningGraph.addModel(sm, PatternWeightSystem.JWSPaperFormula);
 					modelLearner.graphBuilder = modelLearningGraph.getGraphBuilder();
 					modelLearner.nodeIdFactory = modelLearner.graphBuilder.getNodeIdFactory();
 					// save graph to file
@@ -807,8 +807,8 @@ public class ModelLearner_Old {
 								hypothesisList;
 				}
 
-				Map<String, SemanticModel> models = 
-						new TreeMap<String, SemanticModel>();
+				Map<String, SemanticModel> models =
+						new TreeMap<>();
 
 				// export to json
 				//				if (topHypotheses != null)

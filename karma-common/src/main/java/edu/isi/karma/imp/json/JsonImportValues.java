@@ -5,10 +5,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections.IteratorUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,7 +35,7 @@ public class JsonImportValues {
 	private RepFactory factory;
 	private Worksheet worksheet;
 	private JSONArray columnsJson;
-	private Map<String, Boolean> columnsCache = new HashMap<String, Boolean>();
+	private Map<String, Boolean> columnsCache = new HashMap<>();
 	public JsonImportValues(int maxNumLines, int numObjects, RepFactory factory, 
 			Worksheet worksheet, JSONArray columnsJson) {
 		this.maxNumLines = maxNumLines;
@@ -206,8 +206,7 @@ public class JsonImportValues {
 
 	@SuppressWarnings("unchecked")
 	public Iterator<String> getSortedKeysIterator(JSONObject object) {
-		List<String> keys = new LinkedList<String>();
-		keys.addAll(object.keySet());
+		List<String> keys = IteratorUtils.toList(object.keys());
 		Collections.sort(keys);
 		Iterator<String> it = keys.iterator();
 		return it;
@@ -215,6 +214,11 @@ public class JsonImportValues {
 
 	public void addListElement(Object listValue, HTable headers,
 			Table dataTable) throws JSONException {
+			
+		if(JSONObject.NULL.equals(listValue)) {
+			listValue = "";
+		}
+		
 		if (listValue instanceof JSONObject) {
 			if (maxNumLines <= 0 || numObjects < maxNumLines) {
 				Row row = dataTable.addRow(factory);
@@ -266,7 +270,8 @@ public class JsonImportValues {
 				}
 			}
 		} else {
-			logger.error("Cannot handle whatever case is not covered by the if statements. Sorry.");
+			logger.error("Cannot handle whatever case is not covered by the if statements. Sorry");
+			logger.error(listValue.toString());
 		}
 
 	}
@@ -342,7 +347,7 @@ public class JsonImportValues {
 					worksheet, factory);
 
 			// Check for all the nodes that have value and nested tables
-			Collection<Node> nodes = new ArrayList<Node>();
+			Collection<Node> nodes = new ArrayList<>();
 			worksheet.getDataTable().collectNodes(
 					hNode.getHNodePath(factory), nodes, SuperSelectionManager.DEFAULT_SELECTION);
 			for (Node node : nodes) {
@@ -436,4 +441,7 @@ public class JsonImportValues {
 		return null;
 	}
 
+	public int getNumberOfObjectsImported() {
+		return numObjects;
+	}
 }

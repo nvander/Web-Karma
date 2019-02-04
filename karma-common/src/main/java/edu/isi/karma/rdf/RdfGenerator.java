@@ -22,6 +22,7 @@
 package edu.isi.karma.rdf;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.json.JSONArray;
@@ -74,9 +75,15 @@ public abstract class RdfGenerator {
 		WorksheetCommandHistoryExecutor wchr = new WorksheetCommandHistoryExecutor(worksheet.getId(), workspace);
 		try
 		{
-			List<CommandTag> tags = new ArrayList<CommandTag>();
+			List<CommandTag> tags = new ArrayList<>();
+			tags.add(CommandTag.Selection);
 			tags.add(CommandTag.Transformation);
-			wchr.executeCommandsByTags(tags, new JSONArray(mapping.getWorksheetHistoryString()));
+			
+			List<CommandTag> ignoreTags = new ArrayList<>();
+			ignoreTags.add(CommandTag.IgnoreInBatch);
+			wchr.executeCommandsByTags(tags, 
+					ignoreTags,
+					new JSONArray(mapping.getWorksheetHistoryString()));
 		}
 		catch (CommandException | KarmaException e)
 		{

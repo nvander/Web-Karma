@@ -16,6 +16,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -59,18 +60,21 @@ public class EvaluateMRR {
 
 					// Reading correct Semantic labels and storing in an array list 
 					JSONArray userArray = (JSONArray) obj.get("userSemanticTypes");
-					ArrayList <String> correctTypes= new ArrayList<String>();
+					List<String> correctTypes= new ArrayList<>();
+
 					for(Object o1: userArray){
 						JSONObject userObj= (JSONObject) o1;
-						correctTypes.add(userObj.get("domain")+"");
+						correctTypes.add(userObj.get("domain").toString() + userObj.get("type").toString());
 					}
 
 					// Reading learned Semantic labels and storing in an array list 
 					JSONArray learnedArray = (JSONArray) obj.get("learnedSemanticTypes");
-					ArrayList <String> learnedTypes= new ArrayList<String>();
+					List<String> learnedTypes= new ArrayList<>();
+
+					if (learnedArray != null)
 					for(Object o2: learnedArray){
 						JSONObject learnedObj= (JSONObject) o2;
-						learnedTypes.add(learnedObj.get("domain")+""); 
+						learnedTypes.add(learnedObj.get("domain").toString() + learnedObj.get("type").toString()); 
 					}
 
 					int rank=1; // rank of correct semantic type in the learned semantic labels ordered list
@@ -161,18 +165,20 @@ public class EvaluateMRR {
 
 					// Reading correct Semantic labels and storing in an array list 
 					JSONArray userArray = (JSONArray) obj.get("userSemanticTypes");
-					ArrayList <String> correctTypes= new ArrayList<String>();
+					List<String> correctTypes= new ArrayList<>();
+
 					for(Object o1: userArray){
 						JSONObject userObj= (JSONObject) o1;
-						correctTypes.add(userObj.get("domain")+"");
+						correctTypes.add(userObj.get("domain").toString() + userObj.get("type").toString());
 					}
 
 					// Reading learned Semantic labels and storing in an array list 
 					JSONArray learnedArray = (JSONArray) obj.get("learnedSemanticTypes");
-					ArrayList <String> learnedTypes= new ArrayList<String>();
+					List<String> learnedTypes= new ArrayList<>();
+
 					for(Object o2: learnedArray){
 						JSONObject learnedObj= (JSONObject) o2;
-						learnedTypes.add(learnedObj.get("domain")+""); 
+						learnedTypes.add(learnedObj.get("domain").toString() + learnedObj.get("type").toString()); 
 					}
 
 					int rank=1; // rank of correct semantic type in the learned semantic labels ordered list

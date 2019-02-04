@@ -1,16 +1,6 @@
 package edu.isi.karma.rdf;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-
-import org.json.JSONException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import edu.isi.karma.controller.update.UpdateContainer;
-import edu.isi.karma.er.helper.PythonRepository;
 import edu.isi.karma.er.helper.PythonRepositoryRegistry;
 import edu.isi.karma.kr2rml.ContextIdentifier;
 import edu.isi.karma.kr2rml.mapping.KR2RMLMapping;
@@ -24,6 +14,14 @@ import edu.isi.karma.webserver.ContextParametersRegistry;
 import edu.isi.karma.webserver.KarmaException;
 import edu.isi.karma.webserver.ServletContextParameterMap;
 import edu.isi.karma.webserver.ServletContextParameterMap.ContextParameter;
+import org.json.JSONException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 public class BaseKarma {
 	private static Logger LOG = LoggerFactory.getLogger(BaseKarma.class);
@@ -31,13 +29,18 @@ public class BaseKarma {
 	protected GenericRDFGenerator generator;
 	protected String baseURI;
 	protected InputType inputType;
+	
 	protected String modelUri;
 	protected String modelFile;
 	protected URL modelURL;
+	protected String modelContent;
+	
 	protected ContextIdentifier contextId; 
 	protected String rdfGenerationRoot = null;
-	public void setup(String karmaHomePath, String inputTypeString, String modelUri, String modelFile, 
-			String baseURI, String contextURI, String root, String selection) {
+	public void setup(String karmaHomePath, String inputTypeString, 
+			String modelUri, String modelFile, String modelContent,
+			String baseURI, String contextURI, String contextContent,
+			String root, String selection) {
 
 		try {
 			setupKarmaHome(karmaHomePath);
@@ -45,10 +48,13 @@ public class BaseKarma {
 			generator = new GenericRDFGenerator(selection);
 			this.modelUri = modelUri;
 			this.modelFile = modelFile;
+			this.modelContent = modelContent;
+			
 			this.baseURI = baseURI;
+			
 			addModel();
 			if (contextURI != null && !contextURI.isEmpty()) {
-				addContext(contextURI);
+				addContext(contextURI, contextContent);
 			}
 			setRdfGenerationRoot(root, "model");
 		} catch (KarmaException | IOException e) {
@@ -75,34 +81,31 @@ public class BaseKarma {
 			}	
 		}
 		
-		ServletContextParameterMap contextParameters = new ServletContextParameterMap(null);
 		ContextParametersRegistry contextParametersRegistry = ContextParametersRegistry.getInstance();
-		contextParametersRegistry.register(contextParameters);
-		
+		ServletContextParameterMap contextParameters = contextParametersRegistry.registerByKarmaHome(null);
 		KarmaMetadataManager userMetadataManager;
 		userMetadataManager = new KarmaMetadataManager(contextParameters);
 		UpdateContainer uc = new UpdateContainer();
 		userMetadataManager.register(new UserPreferencesMetadata(contextParameters), uc);
 		userMetadataManager.register(new UserConfigMetadata(contextParameters), uc);
 		userMetadataManager.register(new PythonTransformationMetadata(contextParameters), uc);
-		PythonRepository pythonRepository = new PythonRepository(false, contextParameters.getParameterValue(ContextParameter.USER_PYTHON_SCRIPTS_DIRECTORY));
-		PythonRepositoryRegistry.getInstance().register(pythonRepository);
+		PythonRepositoryRegistry.getInstance().registerSafe(contextParameters.getParameterValue(ContextParameter.USER_PYTHON_SCRIPTS_DIRECTORY));
 	}
 
 	private void addModel() throws MalformedURLException {
 		getModel();
-		generator.addModel(new R2RMLMappingIdentifier("model", modelURL));
+		generator.addModel(new R2RMLMappingIdentifier("model", modelURL, modelContent));
 	}
 	
-	public void addModel(String modelName,String modelFile,String modelUri) throws MalformedURLException {
-		URL modelURL = getModel(modelFile,modelUri);
-		generator.addModel(new R2RMLMappingIdentifier(modelName,modelURL));
+	public void addModel(String modelName, String modelFile, String modelUri, String modelContent) throws MalformedURLException {
+		URL modelURL = getModel(modelFile, modelUri);
+		generator.addModel(new R2RMLMappingIdentifier(modelName, modelURL, modelContent));
 		
 	}
 
-	private void addContext(String contextURI)    {
+	private void addContext(String contextURI, String contextContent)    {
 		try {
-			contextId = new ContextIdentifier("context", new URL(contextURI));
+			contextId = new ContextIdentifier("context", new URL(contextURI), contextContent);
 			generator.addContext(contextId);
 		}catch(Exception e) {
 
@@ -185,6 +188,7 @@ public class BaseKarma {
 			}
 		}
 		catch (KarmaException | JSONException | IOException e) {
+			LOG.error("Not able to set root", e);
 			throw new RuntimeException("Unable to set rdf generation root: " + e.getMessage());
 		}
 		

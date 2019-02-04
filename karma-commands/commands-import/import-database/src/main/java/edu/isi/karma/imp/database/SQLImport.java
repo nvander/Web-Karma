@@ -31,6 +31,7 @@ public class SQLImport extends Import {
     private String dBorSIDName;
     private String query;
     private Workspace workspace;
+    private String encoding;
     
     //private static Logger logger = LoggerFactory.getLogger(DatabaseTableImport.class);
     public SQLImport(DBType dbType, String hostname, int portnumber,
@@ -45,9 +46,13 @@ public class SQLImport extends Import {
         this.dBorSIDName = dBorSIDName;
         this.query = query;
         this.workspace = workspace;
+        this.encoding = encoding;
     }
 
-
+    public SQLImport duplicate() {
+    	return new SQLImport(dbType, hostname, portnumber, username, password, dBorSIDName, query, workspace, encoding);
+    }
+    
     @Override
     public Worksheet generateWorksheet() throws KarmaException {
         /**
@@ -87,10 +92,10 @@ public class SQLImport extends Import {
 	     * Add the headers *
 	     */
 	    HTable headers = getWorksheet().getHeaders();
-	    List<String> headersList = new ArrayList<String>();
+	    List<String> headersList = new ArrayList<>();
 	    for (int i = 0; i < data.get(0).size(); i++)
 	    {
-		    HNode hNode = null;
+		    HNode hNode;
 		    hNode = headers.addHNode(data.get(0).get(i), HNodeType.Regular, getWorksheet(), getFactory());
 		    headersList.add(hNode.getId());
 	    }

@@ -73,9 +73,10 @@ public class SuggestModelCommandFactory extends JSONInputCommandFactory {
 			JSONObject typeObj = (JSONObject) inputJson.get(++i);
 			JSONObject value = (JSONObject) typeObj.get(ClientJsonKeys.value.name());
 			
-			SemanticType type = null;
+			SemanticType type;
 			String domain = (String) value.get(SemanticType.ClientJsonKeys.DomainUri.name());
 			String fullType = (String) value.get(SemanticType.ClientJsonKeys.FullType.name());
+			String domainId = (String) value.get(SemanticType.ClientJsonKeys.DomainId.name());
 			
 			Label typeName = ontMgr.getUriLabel(fullType);
 			Label domainName = null;
@@ -83,7 +84,7 @@ public class SuggestModelCommandFactory extends JSONInputCommandFactory {
 				domainName = ontMgr.getUriLabel(domain);
 			
 			if(typeName != null) {
-				type = new SemanticType(hNodeId, typeName, domainName, Origin.User, 1.00);
+				type = new SemanticType(hNodeId, typeName, domainName, domainId, false, Origin.User, 1.00);
 				worksheet.getSemanticTypes().addType(type);
 			}
 		}

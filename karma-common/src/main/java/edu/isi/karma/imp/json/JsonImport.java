@@ -28,6 +28,7 @@ package edu.isi.karma.imp.json;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 
 import org.json.JSONArray;
@@ -56,9 +57,11 @@ public class JsonImport extends Import {
 	private static Logger logger = LoggerFactory.getLogger(JsonImport.class);
 	private final Object json;
 	private int maxNumLines;
-	private int numObjects;
 	private Workspace workspace;
 	private JSONArray columnsJson;
+	private String worksheetName;
+	private String encoding;
+	
 	private class FileObject {
 		File file;
 		String encoding;
@@ -68,22 +71,38 @@ public class JsonImport extends Import {
 		}
 		
 	}
+	
 	public JsonImport(Object json, String worksheetName, Workspace workspace,
 			String encoding, int maxNumLines) {
 		super(worksheetName, workspace, encoding);
 		this.json = json;
 		this.workspace = workspace;
 		this.maxNumLines = maxNumLines;
+		this.worksheetName = worksheetName;
+		this.encoding = encoding;
 	}
 
-	public JsonImport(File jsonFile, String worksheetName, Workspace workspace,
-			String encoding, int maxNumLines, JSONArray tree) {
+	public JsonImport duplicate() {
+		return new JsonImport(this.json, this.worksheetName, this.workspace, this.encoding, this.maxNumLines);
+	}
+	
+	public JsonImport(File jsonFile, String worksheetName, Workspace workspace,String encoding, int maxNumLines, JSONArray tree,boolean isJSONLines) throws FileNotFoundException, Exception {
+		
 		super(worksheetName, workspace, encoding);
 		FileObject fo = new FileObject(jsonFile, encoding);
-		this.json = fo;
+
+		if(isJSONLines){
+			this.json = JSONUtil.convertJSONLinesToJSONArray(new FileInputStream(fo.file), fo.encoding);
+		}
+		else{
+			this.json = fo;
+		}
 		this.workspace = workspace;
 		this.maxNumLines = maxNumLines;
 		this.columnsJson = tree;
+		this.worksheetName = worksheetName;
+		this.encoding = encoding;
+		
 	}
 
 	public JsonImport(String jsonString, String worksheetName,
@@ -103,6 +122,8 @@ public class JsonImport extends Import {
 		this.json = json;
 		this.workspace = workspace;
 		this.maxNumLines = maxNumLines;
+		this.worksheetName = wk.getTitle();
+		this.encoding = "UTF-8";
 	}
 	
 	public JsonImport(File json, RepFactory repFactory, Worksheet wk, Workspace workspace, 
@@ -113,11 +134,14 @@ public class JsonImport extends Import {
 		this.workspace = workspace;
 		this.maxNumLines = maxNumLines;
 		this.columnsJson = columnsJson;
+		this.worksheetName = wk.getTitle();
+		this.encoding = "UTF-8";
 	}
+	
 
 	@Override
 	public Worksheet generateWorksheet() throws JSONException {
-		numObjects = 0;
+		int numObjects = 0;
 		if (json instanceof JSONArray) {
 			getWorksheet().getMetadataContainer().getWorksheetProperties().setWorksheetDataStructure(DataStructure.COLLECTION);
 			JSONArray a = (JSONArray) json;
@@ -125,6 +149,7 @@ public class JsonImport extends Import {
 				JsonImportValues JsonImportValues = new JsonImportValues(maxNumLines, numObjects, getFactory(), getWorksheet(), columnsJson);
 				JsonImportValues.addListElement(a.get(i), getWorksheet().getHeaders(),
 						getWorksheet().getDataTable());
+				numObjects = JsonImportValues.getNumberOfObjectsImported();
 				if (maxNumLines > 0 && numObjects >= maxNumLines)
 					break;
 			}

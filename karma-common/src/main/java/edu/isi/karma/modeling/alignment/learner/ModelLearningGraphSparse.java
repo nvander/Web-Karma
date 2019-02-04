@@ -73,7 +73,7 @@ public class ModelLearningGraphSparse extends ModelLearningGraph {
 
 
 	@Override
-	public Set<InternalNode> addModel(SemanticModel model, boolean useOriginalWeights) {
+	public Set<InternalNode> addModel(SemanticModel model, PatternWeightSystem weightSystem) {
 
 		HashMap<Node, Node> visitedNodes;
 		Node source, target;
@@ -94,7 +94,7 @@ public class ModelLearningGraphSparse extends ModelLearningGraph {
 			return null;
 		}
 
-		visitedNodes = new HashMap<Node, Node>();
+		visitedNodes = new HashMap<>();
 
 		for (LabeledLink e : model.getGraph().edgeSet()) {
 
@@ -115,7 +115,7 @@ public class ModelLearningGraphSparse extends ModelLearningGraph {
 				}
 				else {
 					String id = new RandomGUID().toString();
-					ColumnNode node = new ColumnNode(id, id, ((ColumnNode)target).getColumnName(), null);
+					ColumnNode node = new ColumnNode(id, id, ((ColumnNode)target).getColumnName(), null, null);
 					if (this.graphBuilder.addNode(node)) {
 						n1 = node;
 					} else continue;
@@ -136,14 +136,14 @@ public class ModelLearningGraphSparse extends ModelLearningGraph {
 				else if(target instanceof LiteralNode) {
 					LiteralNode lTarget = (LiteralNode)target;
 					String id = nodeIdFactory.getNodeId(lTarget.getValue());
-					LiteralNode node = new LiteralNode(id, lTarget.getValue(), new Label(target.getLabel()), lTarget.isUri());
+					LiteralNode node = new LiteralNode(id, lTarget.getValue(), new Label(target.getLabel()), lTarget.getLanguage(), lTarget.isUri());
 					if (this.graphBuilder.addNode(node)) {
 						n2 = node;
 					} else continue;
 				}
 				else {
 					String id = new RandomGUID().toString();
-					ColumnNode node = new ColumnNode(id, id, ((ColumnNode)target).getColumnName(), null);
+					ColumnNode node = new ColumnNode(id, id, ((ColumnNode)target).getColumnName(), null, null);
 					if (this.graphBuilder.addNode(node)) {
 						n2 = node;
 					} else continue;

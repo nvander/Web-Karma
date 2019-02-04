@@ -30,6 +30,9 @@ import edu.isi.karma.modeling.research.Params;
 
 public class ModelReader {
 
+	private ModelReader() {
+	}
+
 	public static void main(String[] args) throws Exception {
 		
 		List<SemanticModel> semanticModels = null;
@@ -54,7 +57,7 @@ public class ModelReader {
 		File ff = new File(path);
 		File[] files = ff.listFiles();
 		
-		List<SemanticModel> semanticModels = new ArrayList<SemanticModel>();
+		List<SemanticModel> semanticModels = new ArrayList<>();
 		
 		for (File f : files) {
 			if (f.getName().endsWith(fileExtension)) {

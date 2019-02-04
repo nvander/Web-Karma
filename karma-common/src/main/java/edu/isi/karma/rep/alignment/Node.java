@@ -31,7 +31,7 @@ import com.rits.cloning.Cloner;
 import edu.isi.karma.modeling.Uris;
 import edu.isi.karma.util.RandomGUID;
 
-public abstract class Node implements Comparable<Node> {
+public abstract class Node implements Comparable<Node>, Cloneable {
 
 	static Logger logger = LoggerFactory.getLogger(Node.class);
 
@@ -63,7 +63,7 @@ public abstract class Node implements Comparable<Node> {
 		Label l = null;
 		this.label = new Label(l);
 		this.type = NodeType.None;
-		this.modelIds = new HashSet<String>();
+		this.modelIds = new HashSet<>();
 	}
 	
 	public String getId() {
@@ -104,7 +104,7 @@ public abstract class Node implements Comparable<Node> {
 	
 	public Set<String> getModelIds() {
 		if (this.modelIds == null)
-			return new HashSet<String>();
+			return new HashSet<>();
 		return modelIds;
 	}
 

@@ -1,37 +1,5 @@
 package edu.isi.karma.rdf;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.nio.charset.Charset;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
-import org.apache.tika.detect.DefaultDetector;
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
-import org.apache.tika.mime.MimeTypes;
-import org.apache.tika.parser.AutoDetectParser;
-import org.apache.tika.sax.BodyContentHandler;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.JSONTokener;
-import org.json.XML;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.SAXException;
-
 import edu.isi.karma.controller.command.selection.SuperSelection;
 import edu.isi.karma.controller.command.selection.SuperSelectionManager;
 import edu.isi.karma.imp.Import;
@@ -59,6 +27,33 @@ import edu.isi.karma.webserver.ContextParametersRegistry;
 import edu.isi.karma.webserver.KarmaException;
 import edu.isi.karma.webserver.ServletContextParameterMap;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.tika.detect.DefaultDetector;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MediaTypeRegistry;
+import org.apache.tika.mime.MimeTypes;
+import org.apache.tika.parser.AutoDetectParser;
+import org.apache.tika.sax.BodyContentHandler;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+import org.json.XML;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class GenericRDFGenerator extends RdfGenerator {
 
 	private static Logger logger = LoggerFactory.getLogger(GenericRDFGenerator.class);
@@ -73,7 +68,8 @@ public class GenericRDFGenerator extends RdfGenerator {
 		JSON,
 		XML,
 		AVRO,
-		EXCEL
+		EXCEL,
+		JL
 	};
 	
 	public GenericRDFGenerator() {
@@ -82,10 +78,10 @@ public class GenericRDFGenerator extends RdfGenerator {
 	
 	public GenericRDFGenerator(String selectionName) {
 		super(selectionName);
-		this.modelIdentifiers = new ConcurrentHashMap<String, R2RMLMappingIdentifier>();
-		this.readModelParsers = new ConcurrentHashMap<String, WorksheetR2RMLJenaModelParser>();
-		this.contextCache = new HashMap<String, JSONObject>();
-		this.contextIdentifiers = new HashMap<String, ContextIdentifier>();
+		this.modelIdentifiers = new ConcurrentHashMap<>();
+		this.readModelParsers = new ConcurrentHashMap<>();
+		this.contextCache = new HashMap<>();
+		this.contextIdentifiers = new HashMap<>();
 	}
 
 	public void addModel(R2RMLMappingIdentifier modelIdentifier) {
@@ -320,6 +316,10 @@ public class GenericRDFGenerator extends RdfGenerator {
 				}
 				case AVRO : {
 					worksheet = generateWorksheetFromAvroStream(sourceName, is, inputParameters, workspace);
+					break;
+				}
+				case JL: {
+					worksheet = generateWorksheetFromJLStream(sourceName, is, inputParameters, workspace);
 				}
 				
 			}
@@ -347,7 +347,12 @@ public class GenericRDFGenerator extends RdfGenerator {
 		if (contextCache.containsKey(id.getName())) {
 			return contextCache.get(id.getName());
 		}
-		JSONTokener token = new JSONTokener(id.getLocation().openStream());
+		InputStream jsonStream;
+		if(id.getContent() != null)
+			jsonStream = IOUtils.toInputStream(id.getContent(), "utf-8");
+		else
+			jsonStream = id.getLocation().openStream();
+		JSONTokener token = new JSONTokener(new InputStreamReader(jsonStream));
 		JSONObject obj = new JSONObject(token);
 		this.contextCache.put(id.getName(), obj);
 		return obj;
@@ -438,5 +443,18 @@ public class GenericRDFGenerator extends RdfGenerator {
 		AvroImport imp = new AvroImport(is, sourceName, workspace, encoding, maxNumLines);
 		worksheet = imp.generateWorksheet();
 		return worksheet;
+	}
+	
+	private Worksheet generateWorksheetFromJLStream(String sourceName, InputStream is, InputProperties inputTypeParams,
+			Workspace workspace) throws Exception{
+		Worksheet worksheet;
+		String encoding = (String)inputTypeParams.get(InputProperty.ENCODING);
+		int maxNumLines = (inputTypeParams.get(InputProperty.MAX_NUM_LINES) != null)? (int)inputTypeParams.get(InputProperty.MAX_NUM_LINES) : -1;
+		Object json=JSONUtil.convertJSONLinesToJSONArray(is,encoding);
+		
+		JsonImport imp = new JsonImport(json, sourceName, workspace, encoding, maxNumLines);
+		worksheet = imp.generateWorksheet();
+		return worksheet;
+		
 	}
 }

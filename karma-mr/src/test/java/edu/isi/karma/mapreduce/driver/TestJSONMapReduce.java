@@ -47,19 +47,32 @@ public class TestJSONMapReduce extends TestRDFMapReduce {
 
 		mapDriver.addInput(new Text("people.json"), new Text(IOUtils.toString(TestJSONMapReduce.class.getClassLoader().getResourceAsStream("data/json/people.json"))));
 		List<Pair<Text,Text>> results = mapDriver.run();
+		System.out.println(results);
 		assertTrue(results.size() > 1);
 	}
+	
+	@Test
+	public void testMapDisableNesting() throws IOException {
 
+		mapDriver.addInput(new Text("people.json"), new Text(IOUtils.toString(TestJSONMapReduce.class.getClassLoader().getResourceAsStream("data/json/people.json"))));
+		org.apache.hadoop.conf.Configuration conf = mapDriver.getConfiguration();
+		conf.set("rdf.generation.disable.nesting", "true");
+		List<Pair<Text,Text>> results = mapDriver.run();
+		System.out.println(results);
+		assertTrue(results.size() == 27);
+		conf.set("rdf.generation.disable.nesting", "false");
+	}
+	
 	@Test
 	public void testReduce() throws IOException 
 	{
-		List<Pair<Text,List<Text>>> inputs = new LinkedList<Pair<Text,List<Text>>>();
+		List<Pair<Text,List<Text>>> inputs = new LinkedList<>();
 
-		List<Text> jasonTriples = new LinkedList<Text>();
+		List<Text> jasonTriples = new LinkedList<>();
 		jasonTriples.add(new Text(IOUtils.toString(TestN3MapReduce.class.getClassLoader().getResourceAsStream("jason.json"))));
 		jasonTriples.add(new Text(IOUtils.toString(TestN3MapReduce.class.getClassLoader().getResourceAsStream("jason3.json"))));
 
-		inputs.add(new Pair<Text,List<Text>>(new Text("http://lod.isi.edu/cs548/person/Slepicka"), jasonTriples));
+		inputs.add(new Pair<>(new Text("http://lod.isi.edu/cs548/person/Slepicka"), jasonTriples));
 		reduceDriver.withAllOutput(getPairsFromFile("output/jason.output.json"));
 		reduceDriver.withAll(inputs);
 		reduceDriver.runTest();

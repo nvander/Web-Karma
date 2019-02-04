@@ -29,7 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ServletContextParameterMap {
-	private Map<ContextParameter, String> valuesMap = new ConcurrentHashMap<ContextParameter, String>();
+	private Map<ContextParameter, String> valuesMap = new ConcurrentHashMap<>();
 
 	protected final String id;
 	
@@ -106,7 +106,6 @@ public class ServletContextParameterMap {
 	public String getParameterValue(ContextParameter param) {
 		if (valuesMap.containsKey(param))
 			return valuesMap.get(param);
-//		logger.error("Parameter value does not exist! " + param);
 
 		return "";
 	}
@@ -120,4 +119,9 @@ public class ServletContextParameterMap {
 		return id;
 	}
 
+	@Override
+	public String toString(){
+		
+		return id + ": " + valuesMap.toString();
+	}
 }

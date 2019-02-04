@@ -70,7 +70,7 @@ public class SubmitPythonTransformationCommand extends MutatingPythonTransformat
 		//logger.info("SubmitPythonTranformationCommand:" + id + " newColumnName:" + newColumnName + ", code=" + transformationCode);
 		this.pythonNodeId = hNodeId;
 	}
-
+	
 	@Override
 	public String getCommandName() {
 		return this.getClass().getSimpleName();
@@ -124,6 +124,7 @@ public class SubmitPythonTransformationCommand extends MutatingPythonTransformat
 					Map<String, String> mapping = gatherTransformedResults(workspace, nodeId);
 					handleJSONOutput(workspace, mapping, newColumnNameHNode);
 				}
+				newColumnAbsoluteName = newColumnNameHNode.getAbsoluteColumnName(f);
 				WorksheetUpdateFactory.detectSelectionStatusChange(worksheetId, workspace, this);
 				return c;
 			} else {
@@ -191,7 +192,7 @@ public class SubmitPythonTransformationCommand extends MutatingPythonTransformat
 	private void removeNestedTable(Workspace workspace) {
 		HNode hNode = workspace.getFactory().getHNode(pythonNodeId);
 		hNode.removeNestedTable();
-		List<Node> nodes = new ArrayList<Node>();
+		List<Node> nodes = new ArrayList<>();
 		workspace.getWorksheet(worksheetId).getDataTable().collectNodes(hNode.getHNodePath(workspace.getFactory()), nodes, getSuperSelection(workspace.getWorksheet(worksheetId)));
 		for (Node node : nodes) {
 			node.setNestedTable(null, workspace.getFactory());
@@ -248,8 +249,8 @@ public class SubmitPythonTransformationCommand extends MutatingPythonTransformat
 		RepFactory f = workspace.getFactory();
 		HNode hNode = f.getHNode(pythonNodeId);
 
-		this.originalColumnValues = new ArrayList<String>();
-		Collection<Node> nodes = new ArrayList<Node>();
+		this.originalColumnValues = new ArrayList<>();
+		Collection<Node> nodes = new ArrayList<>();
 		worksheet.getDataTable().collectNodes(hNode.getHNodePath(f), nodes, selection);
 		for(Node node : nodes) {
 			originalColumnValues.add(node.serializeToJSON(selection, f).toString());
@@ -279,10 +280,8 @@ public class SubmitPythonTransformationCommand extends MutatingPythonTransformat
 			ICommand command = commands.get(i);
 			if(command instanceof SubmitPythonTransformationCommand) {
 				SubmitPythonTransformationCommand pyCommand = (SubmitPythonTransformationCommand)command;
-				if(pyCommand.worksheetId.equals(this.worksheetId)) {
-					if(pyCommand.pythonNodeId.equals(this.pythonNodeId)) {
-						return command;
-					}
+				if(pyCommand.worksheetId.equals(this.worksheetId) && pyCommand.pythonNodeId.equals(this.pythonNodeId)) {
+					return command;
 				}
 			}
 		}

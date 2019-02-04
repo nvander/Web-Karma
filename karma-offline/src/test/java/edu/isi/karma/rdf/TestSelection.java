@@ -14,6 +14,7 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.json.JSONException;
@@ -128,7 +129,7 @@ public class TestSelection {
 		worksheet.getSuperSelectionManager().defineSelection("test").addSelection(sel);
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
-		List<KR2RMLRDFWriter> writers = new ArrayList<KR2RMLRDFWriter>();
+		List<KR2RMLRDFWriter> writers = new ArrayList<>();
 		writers.add(new N3KR2RMLRDFWriter(new URIFormatter(), pw));
 		WorksheetR2RMLJenaModelParser modelParser = new WorksheetR2RMLJenaModelParser(modelIdentifier);
 		applyHistoryToWorksheet(workspace, worksheet, modelParser.parse());
@@ -152,9 +153,15 @@ public class TestSelection {
 		WorksheetCommandHistoryExecutor wchr = new WorksheetCommandHistoryExecutor(worksheet.getId(), workspace);
 		try
 		{
-			List<CommandTag> tags = new ArrayList<CommandTag>();
+			List<CommandTag> tags = new ArrayList<>();
 			tags.add(CommandTag.Transformation);
-			wchr.executeCommandsByTags(tags, mapping.getWorksheetHistory());
+			
+			List<CommandTag> ignoreTags = new ArrayList<>();
+			ignoreTags.add(CommandTag.IgnoreInBatch);
+			
+			wchr.executeCommandsByTags(tags, 
+					ignoreTags,
+					mapping.getWorksheetHistory());
 		}
 		catch (CommandException | KarmaException e)
 		{

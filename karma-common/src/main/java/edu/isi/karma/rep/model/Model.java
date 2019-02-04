@@ -60,7 +60,7 @@ public class Model {
 
 	public Model(String id) {
 		this.id = id;
-		atoms = new ArrayList<Atom>();
+		atoms = new ArrayList<>();
 	}
 	
 //	public Model(String id, String type) {
@@ -195,10 +195,10 @@ public class Model {
 	private Map<String, Map<String, String>> findSemanticModelInJenaModel( 
 			com.hp.hpl.jena.rdf.model.Model jenaModel, String ioType, Integer limit) {
 
-		Map<String, Map<String, String>> IdsAndMappings = 
-			new HashMap<String, Map<String,String>>();
+		Map<String, Map<String, String>> IdsAndMappings =
+				new HashMap<>();
 		
-		List<String> argList = new ArrayList<String>();
+		List<String> argList = new ArrayList<>();
 		String queryString = "";
 		if (ioType.equalsIgnoreCase(IOType.INPUT)) 
 			queryString = this.getSparqlToMatchServiceInputs(argList);
@@ -265,10 +265,10 @@ public class Model {
 	public List<Map<String, String>> findModelDataInJenaData( 
 			com.hp.hpl.jena.rdf.model.Model jenaModel, Integer limit) {
 
-		List<Map<String, String>> attValueList = 
-			new ArrayList<Map<String,String>>();
+		List<Map<String, String>> attValueList =
+				new ArrayList<>();
 		
-		List<String> argList = new ArrayList<String>();
+		List<String> argList = new ArrayList<>();
 		String queryString = "";
 		queryString = this.getSparqlDataQuery(argList);
 		
@@ -297,8 +297,8 @@ public class Model {
 			for ( ; results.hasNext() ; )
 			{
 				QuerySolution soln = results.nextSolution() ;
-				Map<String, String> attValues = 
-					new HashMap<String, String>();
+				Map<String, String> attValues =
+						new HashMap<>();
 				
 				for (String arg : argList) {
 					RDFNode argNode = soln.get(arg) ;
@@ -331,10 +331,10 @@ public class Model {
 	private static String getSparqlHeader(Map<String, String> nsToPrefixMapping) {
 		String prefixHeader = "";
 		
-		for (String ns : nsToPrefixMapping.keySet()) {
-			String prefix = nsToPrefixMapping.get(ns);
+		for (Map.Entry<String, String> stringStringEntry : nsToPrefixMapping.entrySet()) {
+			String prefix = stringStringEntry.getValue();
 			if (prefix != null)
-				prefixHeader += "PREFIX " + prefix + ": <" + ns + "> \n";
+				prefixHeader += "PREFIX " + prefix + ": <" + stringStringEntry.getKey() + "> \n";
 		}
 
 		return prefixHeader;
@@ -345,7 +345,7 @@ public class Model {
 		String queryString = "";
 		
 		// map of NS --> Prefix
-		Map<String, String> nsToPrefixMapping = new HashMap<String, String>();
+		Map<String, String> nsToPrefixMapping = new HashMap<>();
 		nsToPrefixMapping.put(Namespaces.RDF, Prefixes.RDF);
 		
 		String select_header = "SELECT \n";
@@ -359,13 +359,13 @@ public class Model {
 		String argument2Var = "";
 
 		if (argList == null) 
-			argList = new ArrayList<String>();
+			argList = new ArrayList<>();
 		
 		for (int i = 0; i < this.getAtoms().size(); i++) {
 			Atom atom = this.getAtoms().get(i);
 			if (atom != null) {
 				if (atom instanceof ClassAtom) {
-					ClassAtom classAtom = ((ClassAtom)atom);
+					ClassAtom classAtom = (ClassAtom)atom;
 					
 					if (classAtom.getClassPredicate().getPrefix() != null &&
 							classAtom.getClassPredicate().getNs() != null) { 
@@ -390,7 +390,7 @@ public class Model {
 						"      " + argument1Var + " rdf:type " + predicateUri + " . \n";
 				}
 				else if (atom instanceof IndividualPropertyAtom) {
-					IndividualPropertyAtom propertyAtom = ((IndividualPropertyAtom)atom);
+					IndividualPropertyAtom propertyAtom = (IndividualPropertyAtom)atom;
 					
 					if (propertyAtom.getPropertyPredicate().getPrefix() != null &&
 							propertyAtom.getPropertyPredicate().getNs() != null) { 
@@ -441,7 +441,7 @@ public class Model {
 		String queryString = "";
 		
 		// map of NS --> Prefix
-		Map<String, String> nsToPrefixMapping = new HashMap<String, String>();
+		Map<String, String> nsToPrefixMapping = new HashMap<>();
 		nsToPrefixMapping.put(Namespaces.RDF, Prefixes.RDF);
 		
 		String construct_header = "CONSTRUCT { \n";
@@ -455,13 +455,13 @@ public class Model {
 		String argument2Var = "";
 
 		if (argList == null) 
-			argList = new ArrayList<String>();
+			argList = new ArrayList<>();
 		
 		for (int i = 0; i < this.getAtoms().size(); i++) {
 			Atom atom = this.getAtoms().get(i);
 			if (atom != null) {
 				if (atom instanceof ClassAtom) {
-					ClassAtom classAtom = ((ClassAtom)atom);
+					ClassAtom classAtom = (ClassAtom)atom;
 					
 					if (classAtom.getClassPredicate().getPrefix() != null &&
 							classAtom.getClassPredicate().getNs() != null) { 
@@ -487,7 +487,7 @@ public class Model {
 						"      " + argument1Var + " rdf:type " + predicateUri + " . \n";
 				}
 				else if (atom instanceof IndividualPropertyAtom) {
-					IndividualPropertyAtom propertyAtom = ((IndividualPropertyAtom)atom);
+					IndividualPropertyAtom propertyAtom = (IndividualPropertyAtom)atom;
 					
 					if (propertyAtom.getPropertyPredicate().getPrefix() != null &&
 							propertyAtom.getPropertyPredicate().getNs() != null) { 
@@ -548,7 +548,7 @@ public class Model {
 		String queryString = "";
 		
 		// map of NS --> Prefix
-		Map<String, String> nsToPrefixMapping = new HashMap<String, String>();
+		Map<String, String> nsToPrefixMapping = new HashMap<>();
 		nsToPrefixMapping.put(Namespaces.KARMA, Prefixes.KARMA);
 		nsToPrefixMapping.put(Namespaces.SWRL, Prefixes.SWRL);
 		nsToPrefixMapping.put(Namespaces.HRESTS, Prefixes.HRESTS);
@@ -579,13 +579,13 @@ public class Model {
 		String argument2Var = "";
 
 		if (argList == null) 
-			argList = new ArrayList<String>();
+			argList = new ArrayList<>();
 
 		for (int i = 0; i < m.getAtoms().size(); i++) {
 			Atom atom = m.getAtoms().get(i);
 			if (atom != null) {
 				if (atom instanceof ClassAtom) {
-					ClassAtom classAtom = ((ClassAtom)atom);
+					ClassAtom classAtom = (ClassAtom)atom;
 					atomVar = "?atom" + String.valueOf(i+1);
 					predicateUri = classAtom.getClassPredicate().getUri();
 					argument1 = classAtom.getArgument1().getId();
@@ -603,7 +603,7 @@ public class Model {
 						"      " + atomVar + " " + Prefixes.SWRL + ":argument1 " + argument1Var + " . \n";
 				}
 				else if (atom instanceof IndividualPropertyAtom) {
-					IndividualPropertyAtom propertyAtom = ((IndividualPropertyAtom)atom);
+					IndividualPropertyAtom propertyAtom = (IndividualPropertyAtom)atom;
 					atomVar = "?atom" + String.valueOf(i+1);
 					predicateUri = propertyAtom.getPropertyPredicate().getUri();
 					argument1 = propertyAtom.getArgument1().getId();
@@ -647,7 +647,7 @@ public class Model {
 		for (Atom atom : atoms) {
 			if (atom != null) {
 				if (atom instanceof ClassAtom) {
-					ClassAtom classAtom = ((ClassAtom)atom);
+					ClassAtom classAtom = (ClassAtom)atom;
 					logicalForm += classAtom.getClassPredicate().getLocalName();
 					logicalForm += "(";
 					logicalForm += classAtom.getArgument1().getId();
@@ -655,7 +655,7 @@ public class Model {
 					logicalForm += separator;				
 				}
 				else if (atom instanceof IndividualPropertyAtom) {
-					IndividualPropertyAtom propertyAtom = ((IndividualPropertyAtom)atom);
+					IndividualPropertyAtom propertyAtom = (IndividualPropertyAtom)atom;
 					logicalForm += propertyAtom.getPropertyPredicate().getLocalName();
 					logicalForm += "(";
 					logicalForm += propertyAtom.getArgument1().getId();

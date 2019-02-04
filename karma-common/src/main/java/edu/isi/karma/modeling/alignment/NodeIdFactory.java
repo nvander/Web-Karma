@@ -23,9 +23,9 @@ package edu.isi.karma.modeling.alignment;
 
 import java.util.HashMap;
 
-public class NodeIdFactory {
+public class NodeIdFactory implements Cloneable {
 
-	private HashMap<String, Integer> nodeUris = new HashMap<String, Integer>();
+	private HashMap<String, Integer> nodeUris = new HashMap<>();
 	
 
 	public String getNodeId(String uri) {
@@ -75,5 +75,11 @@ public class NodeIdFactory {
 			return nodeUris.get(uri).intValue();
 		else
 			return -1;
+	}
+	
+	public NodeIdFactory clone() {
+		NodeIdFactory clone = new NodeIdFactory();
+		clone.nodeUris.putAll(this.nodeUris);
+		return clone;
 	}
 }

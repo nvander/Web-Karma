@@ -10,6 +10,7 @@ import edu.isi.karma.controller.command.Command;
 import edu.isi.karma.controller.command.CommandException;
 import edu.isi.karma.controller.command.CommandType;
 import edu.isi.karma.controller.command.WorksheetSelectionCommand;
+import edu.isi.karma.controller.command.ICommand.CommandTag;
 import edu.isi.karma.controller.command.selection.LargeSelection.Operation;
 import edu.isi.karma.controller.command.selection.Selection;
 import edu.isi.karma.controller.command.selection.SelectionManager;
@@ -37,6 +38,7 @@ public class RefreshSelectionCommand extends WorksheetSelectionCommand {
 		super(id, model, worksheetId, selectionId);
 		this.hNodeId = hNodeId;
 		addTag(CommandTag.Selection);
+		addTag(CommandTag.IgnoreInBatch);
 	}
 
 	@Override
@@ -71,7 +73,7 @@ public class RefreshSelectionCommand extends WorksheetSelectionCommand {
 		}
 		CommandHistory history = workspace.getCommandHistory();
 		List<Command> tmp = gatherAllOperateSelectionCommands(history.getCommandsFromWorksheetId(worksheetId), workspace);
-		if (tmp.size() > 0) {
+		if (!tmp.isEmpty()) {
 			JSONArray inputJSON = new JSONArray();
 			inputJSON.put(CommandInputJSONUtil.createJsonObject("worksheetId", worksheetId, ParameterType.worksheetId));
 			inputJSON.put(CommandInputJSONUtil.createJsonObject("hNodeId", hNodeId, ParameterType.hNodeId));
@@ -104,7 +106,7 @@ public class RefreshSelectionCommand extends WorksheetSelectionCommand {
 	}
 
 	private List<Command> gatherAllOperateSelectionCommands(List<Command> commands, Workspace workspace) {
-		List<Command> operationCommands = new ArrayList<Command>();
+		List<Command> operationCommands = new ArrayList<>();
 		for (Command c : commands) {
 			if (c instanceof OperateSelectionCommand) {
 				OperateSelectionCommand t = (OperateSelectionCommand)c;

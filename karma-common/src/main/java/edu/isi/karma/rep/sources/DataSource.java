@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.jgrapht.graph.DirectedWeightedMultigraph;
 import org.slf4j.Logger;
@@ -50,36 +51,36 @@ public class DataSource extends Source {
 	private Model model;
 	private List<String> variables;
 
-	HashMap<String, Attribute> attIdToAttMap;
+	Map<String, Attribute> attIdToAttMap;
 
 	public DataSource(String id) {
 		super(id);
-		variables = new ArrayList<String>();
-		attributes = new ArrayList<Attribute>();
-		attIdToAttMap = new HashMap<String, Attribute>();
+		variables = new ArrayList<>();
+		attributes = new ArrayList<>();
+		attIdToAttMap = new HashMap<>();
 	}
 	
 	public DataSource(String id, String name) {
 		super(id, name);
-		variables = new ArrayList<String>();
-		attributes = new ArrayList<Attribute>();
-		attIdToAttMap = new HashMap<String, Attribute>();
+		variables = new ArrayList<>();
+		attributes = new ArrayList<>();
+		attIdToAttMap = new HashMap<>();
 	}
 	
 	public DataSource(String name, DirectedWeightedMultigraph<Node, LabeledLink> treeModel) {
 		super(new RandomGUID().toString());
 		this.setName(name);
-		variables = new ArrayList<String>();
-		attributes = new ArrayList<Attribute>();
-		attIdToAttMap = new HashMap<String, Attribute>();
+		variables = new ArrayList<>();
+		attributes = new ArrayList<>();
+		attIdToAttMap = new HashMap<>();
 		this.updateModel(treeModel);
 	}
 	
 	public DataSource(DirectedWeightedMultigraph<Node, LabeledLink> treeModel) {
 		super(new RandomGUID().toString());
-		variables = new ArrayList<String>();
-		attributes = new ArrayList<Attribute>();
-		attIdToAttMap = new HashMap<String, Attribute>();
+		variables = new ArrayList<>();
+		attributes = new ArrayList<>();
+		attIdToAttMap = new HashMap<>();
 		this.updateModel(treeModel);
 	}
 
@@ -128,9 +129,8 @@ public class DataSource extends Source {
 			return;
 		
 		Model m = new Model("model");
-		
-		HashMap<String, Argument> vertexIdToArgument = new HashMap<String, Argument>();
-		List<Attribute> attributeList = new ArrayList<Attribute>();
+		Map<String, Argument> vertexIdToArgument = new HashMap<>();
+		List<Attribute> attributeList = new ArrayList<>();
 		
 		// get the column name associated to the hNodeIds to assign to attribute names 
 		// set the rdf ids of all the vertices.
@@ -161,7 +161,8 @@ public class DataSource extends Source {
 			if (vertexIdToArgument.get(n.getId()) == null)
 				continue;
 			
-			Label classPredicate = new Label(n.getLabel().getUri(), n.getLabel().getNs(), n.getLabel().getPrefix());
+			Label classPredicate = new Label(n.getLabel().getUri(), n.getLabel().getNs(), n.getLabel().getPrefix(),
+					n.getLabel().getRdfsLabel(), n.getLabel().getRdfsComment());
 
 			ClassAtom classAtom = new ClassAtom(classPredicate, vertexIdToArgument.get(n.getId()));
 			m.getAtoms().add(classAtom);
@@ -173,7 +174,8 @@ public class DataSource extends Source {
 					vertexIdToArgument.get(e.getTarget().getId()) == null)
 				continue;
 
-			Label propertyPredicate = new Label(e.getLabel().getUri(), e.getLabel().getNs(), e.getLabel().getPrefix());
+			Label propertyPredicate = new Label(e.getLabel().getUri(), e.getLabel().getNs(), e.getLabel().getPrefix(),
+					e.getLabel().getRdfsLabel(), e.getLabel().getRdfsComment());
 			IndividualPropertyAtom propertyAtom = null;
 			
 			// has_subclass is from source to target, we substitute this with a rdfs:subClassOf from target to source

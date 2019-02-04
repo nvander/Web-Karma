@@ -26,7 +26,7 @@ var FileFormatSelectionDialog = (function() {
 		function init() {
 			//Initialize what happens when we show the dialog
 			dialog.on('show.bs.modal', function(e) {
-				$("span#fileFormatError").hide();
+				$("#fileFormatError").hide();
 				$("input:radio[name=FileFormatSelection]").attr("checked", false);
 				$("input:checkbox[name='FilterCheck']", dialog).attr('checked', false);
 				var fileName = $("#fileFormatSelectionDialog").data("fileName");
@@ -42,6 +42,8 @@ var FileFormatSelectionDialog = (function() {
 					$(":radio[name=FileFormatSelection][value=Ontology]").prop("checked", true);
 				} else if (fileName.match(".json$")) {
 					$(":radio[name=FileFormatSelection][value=JSONFile]").prop("checked", true);
+				} else if (fileName.match(".jl$")) {
+					$(":radio[name=FileFormatSelection][value=JSONLinesFile]").prop("checked", true);
 				} else if (fileName.match(".avro$")) {
 					$(":radio[name=FileFormatSelection][value=AvroFile]").prop("checked", true);
 				}
@@ -65,7 +67,6 @@ var FileFormatSelectionDialog = (function() {
 			$('#btnSaveFormat', dialog).on('click', function(e) {
 				e.preventDefault();
 				saveDialog(e);
-				dialog.modal('hide');
 			});
 		}
 
@@ -81,9 +82,12 @@ var FileFormatSelectionDialog = (function() {
 			var selectedFormat = $("input:radio[name='FileFormatSelection']:checked").val();
 			console.log("Selected format:" + selectedFormat);
 			if (selectedFormat == null || selectedFormat == "") {
-				$("span#fileFormatError").show();
+				$("#fileFormatError").show();
 				return false;
 			}
+			
+			dialog.modal('hide');
+			
 			var urlString = "RequestController?workspaceId=" + $.workspaceGlobalInformation.id;
 
 			//MVS: add the id of the revised worksheet in the request
@@ -92,7 +96,7 @@ var FileFormatSelectionDialog = (function() {
 			}
 			var RequireFilter = $("input:checkbox[name='FilterCheck']", dialog).prop('checked');
 			RequireFilter = RequireFilter &&
-				(selectedFormat === "JSONFile" || selectedFormat === "XMLFile");
+				(selectedFormat === "JSONFile" || selectedFormat === "XMLFile" || selectedFormat === "JSONLinesFile");
 			urlString += "&filter=" + RequireFilter;
 			urlString += "&isPreview=true";
 			urlString += "&command=";
@@ -156,6 +160,7 @@ var FileOptionsDialog = (function() {
 		var savePreset;
 		var optionSettings = {
 			"JSONFile": ["colEncoding", "colMaxNumLines"],
+			"JSONLinesFile": ["colEncoding", "colMaxNumLines"],
 			"CSVFile": ["colDelimiterSelector", "colTextQualifier", "colHeaderStartIndex", "colStartRowIndex", "colEncoding", "colMaxNumLines"],
 			"XMLFile": ["colEncoding", "colMaxNumLines"],
 			"ExcelFile": ["colEncoding", "colMaxNumLines"],
@@ -209,7 +214,7 @@ var FileOptionsDialog = (function() {
 			$.each(optionSetting, function(index, val) {
 				$("#" + val).show();
 			});
-			if (format == "JSONFile" || format == "XMLFile" || format == "AvroFile") {
+			if (format == "JSONFile" || format == "XMLFile" || format == "AvroFile" || format == "JSONLinesFile") {
 				$('#lblMaxNumLines').text("Objects to import");
 				$(".help-block", $("#colMaxNumLines")).text("Enter 0 to import all objects");
 			} else {
@@ -288,7 +293,9 @@ var FileOptionsDialog = (function() {
 		function reloadOptions(execute) {
 			var format = dialog.data("format");
 			var optionSetting = optionSettings[format];
+			console.log(format);
 			var options = generateInfoObject("", "", "Import" + format + "Command");
+			
 			options["commandId"] = dialog.data("commandId");
 			if ($.inArray("colDelimiterSelector", optionSetting) != -1)
 				options["delimiter"] = $("#delimiterSelector").val();
@@ -302,7 +309,7 @@ var FileOptionsDialog = (function() {
 				options["encoding"] = $("#encoding").val();
 			if ($.inArray("colMaxNumLines", optionSetting) != -1)
 				options["maxNumLines"] = $("#maxNumLines").val();
-
+			
 			options["interactionType"] = "generatePreview";
 			options["isUserInteraction"] = true;
 			var RequireFilter = dialog.data("isFilterSelected");
@@ -352,6 +359,10 @@ var FileOptionsDialog = (function() {
 								var lastWorksheetId = lastWorksheetLoaded.attr("id");
 								ShowExistingModelDialog.getInstance().showIfNeeded(lastWorksheetId);
 							}
+						} else {
+							//format is ontology, reload caches
+							PropertyDialog.getInstance().reloadCache();
+							ClassDialog.getInstance().reloadCache();
 						}
 						dialog.modal('hide');
 					}

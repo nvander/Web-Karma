@@ -16,7 +16,10 @@ import edu.isi.karma.rep.Table;
 import edu.isi.karma.rep.Worksheet;
 
 public class CloneTableUtils {
-	
+
+	private CloneTableUtils() {
+	}
+
 	public static Map<String, String> cloneHTable(HTable newHTable, Worksheet newWorksheet, RepFactory factory, List<HNode> hNodes, boolean isFirst) {
 		Collections.sort(hNodes);
 		Map<String, String> tmp = new HashMap<>();
@@ -32,7 +35,7 @@ public class CloneTableUtils {
 			if (hnode.hasNestedTable()) {
 				HTable oldNested = hnode.getNestedTable();
 				HTable newNested = newHNode.addNestedTable(hnode.getNestedTable().getTableName(), newWorksheet, factory);
-				tmp.putAll(cloneHTable(newNested, newWorksheet, factory, new ArrayList<HNode>(oldNested.getHNodes()), false));
+				tmp.putAll(cloneHTable(newNested, newWorksheet, factory, new ArrayList<>(oldNested.getHNodes()), false));
 			}
 		}
 		return tmp;

@@ -22,14 +22,17 @@
 package edu.isi.karma.config;
 
 import java.io.BufferedWriter;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.Properties;
+import java.util.Scanner;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +62,7 @@ public class ModelingConfiguration {
 	private Boolean trainOnApplyHistory;
 	private Boolean predictOnApplyHistory;
 
+	private Boolean compatibleProperties;
 	private Boolean ontologyAlignment;
 	private Boolean knownModelsAlignment;
 
@@ -79,8 +83,12 @@ public class ModelingConfiguration {
 	private Boolean storeOldHistory;
 
 	private Boolean showModelsWithoutMatching;
+	private String defaultProperty = null;
+	private String graphvizServer = null;
 
-	private final String newLine = System.getProperty("line.separator").toString();
+	private Boolean r2rmlExportSuperclass;
+
+	private final String newLine = System.getProperty("line.separator");
 	
 	private String defaultModelingProperties = 
 			"##########################################################################################" + newLine + 
@@ -100,8 +108,9 @@ public class ModelingConfiguration {
 			"" + newLine + 
 //			"manual.alignment=false" + newLine + 
 			"# turning off the next two flags is equal to manual alignment" + newLine + 
+			"compatible.properties=true" + newLine + 
 			"ontology.alignment=false" + newLine + 
-			"knownmodels.alignment=false" + newLine + 
+			"knownmodels.alignment=true" + newLine + 
 			"" + newLine + 
 			"##########################################################################################" + newLine + 
 			"#" + newLine + 
@@ -129,6 +138,7 @@ public class ModelingConfiguration {
 			"" + newLine + 
 			"karma.source.prefix=http://isi.edu/integration/karma/sources/" + newLine + 
 			"karma.service.prefix=http://isi.edu/integration/karma/services/" + newLine + 
+			"default.property=http://schema.org/name" + newLine +
 			"" + newLine + 
 			"##########################################################################################" + newLine + 
 			"#" + newLine + 
@@ -136,7 +146,7 @@ public class ModelingConfiguration {
 			"#" + newLine + 
 			"##########################################################################################" + newLine + 
 			"" + newLine + 
-			"learner.enabled=false" + newLine + 
+			"learner.enabled=true" + newLine + 
 			"" + newLine + 
 			"add.ontology.paths=false" + newLine + 
 			"" + newLine + 
@@ -159,20 +169,30 @@ public class ModelingConfiguration {
 			"##########################################################################################" + newLine + 
 			"" + newLine + 
 			"models.display.nomatching=false" + newLine +
-			"history.store.old=false"
+			"history.store.old=false" + newLine + 
+			"graphviz.server=http://karma-svc.isi.edu/graphviz/" + newLine +
+			"r2rml.export.superclass=false"
 			;
 
+    private Properties modelingProperties;
 
 	public void load() {
 		try {
-			Properties modelingProperties = loadParams();
-
-			File file = new File(ContextParametersRegistry.getInstance().getContextParameters(contextId).getParameterValue(ContextParameter.USER_CONFIG_DIRECTORY) + "/modeling.properties");
-
+			this.modelingProperties = loadParams();
 			trainOnApplyHistory = Boolean.parseBoolean(modelingProperties.getProperty("train.on.apply.history", "false"));
 			predictOnApplyHistory = Boolean.parseBoolean(modelingProperties.getProperty("predict.on.apply.history", "false"));
 
+//			ontologyAlignment = Boolean.parseBoolean(modelingProperties.getProperty("compatible.properties", "true"));
 
+			String compatiblePropertiesStr = modelingProperties.getProperty("compatible.properties");
+			if(compatiblePropertiesStr != null)
+				compatibleProperties = Boolean.parseBoolean(compatiblePropertiesStr);
+			else {
+				//need to add this property to the end
+				compatibleProperties = true;
+				addProperty("compatible.properties", "true");
+			}
+			
 //			ontologyAlignment = Boolean.parseBoolean(modelingProperties.getProperty("ontology.alignment", "false"));
 
 			String ontologyAlignmentStr = modelingProperties.getProperty("ontology.alignment");
@@ -180,11 +200,8 @@ public class ModelingConfiguration {
 				ontologyAlignment = Boolean.parseBoolean(ontologyAlignmentStr);
 			else {
 				//need to add this property to the end
-				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
 				ontologyAlignment = false;
-				out.println();
-				out.println("ontology.alignment=false");
-				out.close();
+				addProperty("ontology.alignment", "false");
 			}
 			
 //			knownModelsAlignment = Boolean.parseBoolean(modelingProperties.getProperty("knownmodels.alignment", "false"));
@@ -194,11 +211,8 @@ public class ModelingConfiguration {
 				knownModelsAlignment = Boolean.parseBoolean(knownModelsAlignmentStr);
 			else {
 				//need to add this property to the end
-				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
 				knownModelsAlignment = true;
-				out.println();
-				out.println("knownmodels.alignment=false");
-				out.close();
+				addProperty("knownmodels.alignment", "true");
 			}
 			
 //			learnerEnabled = Boolean.parseBoolean(modelingProperties.getProperty("learner.enabled", "true"));
@@ -208,11 +222,8 @@ public class ModelingConfiguration {
 				learnerEnabled = Boolean.parseBoolean(learnerEnabledStr);
 			else {
 				//need to add this property to the end
-				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
 				learnerEnabled = true;
-				out.println();
-				out.println("learner.enabled=false");
-				out.close();
+				addProperty("learner.enabled", "true");
 			}
 
 //			addOntologyPaths = Boolean.parseBoolean(modelingProperties.getProperty("add.ontology.paths", "true"));
@@ -222,11 +233,8 @@ public class ModelingConfiguration {
 				addOntologyPaths = Boolean.parseBoolean(addOntologyPathsStr);
 			else {
 				//need to add this property to the end
-				PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
 				addOntologyPaths = true;
-				out.println();
-				out.println("add.ontology.paths=false");
-				out.close();
+				addProperty("add.ontology.paths", "false");
 			}
 			
 			thingNode = Boolean.parseBoolean(modelingProperties.getProperty("thing.node", "false"));
@@ -265,6 +273,32 @@ public class ModelingConfiguration {
 			storeOldHistory = Boolean.parseBoolean(modelingProperties.getProperty("history.store.old", "false"));
 
 			showModelsWithoutMatching = Boolean.parseBoolean(modelingProperties.getProperty("models.display.nomatching", "false"));
+
+			defaultProperty = modelingProperties.getProperty("default.property");
+			if(defaultProperty == null) {
+				//need to add this property to the end
+				addProperty("default.property", "http://schema.org/name");
+			}
+			
+			graphvizServer = modelingProperties.getProperty("graphviz.server");
+			if(graphvizServer == null) {
+				graphvizServer = "http://karma-svc.isi.edu/graphviz/";
+				addProperty("graphviz.server", graphvizServer);
+			} else if(graphvizServer.equals("http://52.38.65.60/graphviz/")) {
+				graphvizServer = "http://karma-svc.isi.edu/graphviz/";
+				updateProperty("graphviz.server", graphvizServer);
+			}
+
+			String r2rml_export_superclass = modelingProperties.getProperty("r2rml.export.superclass");
+			if(r2rml_export_superclass!=null)
+			{
+				this.r2rmlExportSuperclass = Boolean.parseBoolean(r2rml_export_superclass);
+			}
+			else
+			{
+				this.r2rmlExportSuperclass = false;
+				addProperty("r2rml.export.superclass", "false");
+			}
 
 		} catch (IOException e) {
 			logger.error("Error occured while reading config file ...", e);
@@ -357,6 +391,17 @@ public class ModelingConfiguration {
 		this.predictOnApplyHistory = predictOnApplyHistory;
 	}
 
+	public Boolean getCompatibleProperties() {
+		if (compatibleProperties == null) {
+			load();
+		}
+		return compatibleProperties;
+	}
+	
+	public void setCompatibleProperties(Boolean compatibleProperties) {
+		this.compatibleProperties = compatibleProperties;
+	}
+	
 	public Boolean getOntologyAlignment() {
 		if (ontologyAlignment == null) {
 			load();
@@ -485,12 +530,6 @@ public class ModelingConfiguration {
 		this.addOntologyPaths = addOntologyPaths;
 	}
 	
-//	public static boolean isLearnAlignmentEnabled() {
-//		if (learnAlignmentEnabled == null)
-//			load();
-//		return learnAlignmentEnabled;
-//	}
-	
 	public boolean isStoreOldHistoryEnabled() {
 		if (storeOldHistory == null)
 			load();
@@ -509,11 +548,68 @@ public class ModelingConfiguration {
 		return multipleSamePropertyPerNode;
 	}
 
+	public String getDefaultProperty() {
+		if(defaultProperty == null)
+			load();
+		return defaultProperty;
+	}
+	
 	public void setManualAlignment()
 	{
 		ontologyAlignment = false;
 		knownModelsAlignment = false;
 	}
 
+	public String getGraphvizServer() {
+		return graphvizServer;
+	}
+
+	public void setR2rmlExportSuperClass(boolean r2rml_export_superclass) throws IOException {
+		this.r2rmlExportSuperclass = r2rml_export_superclass;
+		this.updateProperty("r2rml.export.superclass",Boolean.toString(r2rml_export_superclass));
+	}
 	
+	public Boolean getR2rmlExportSuperClass() {
+		if (r2rmlExportSuperclass == null)
+			load();
+		return r2rmlExportSuperclass;
+	}
+
+	private void addProperty(String key, String value) throws IOException {
+		File file = new File(ContextParametersRegistry.getInstance().getContextParameters(contextId).getParameterValue(ContextParameter.USER_CONFIG_DIRECTORY) + "/modeling.properties");
+		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
+		out.println(key + "=" + value);
+		out.close();
+		this.modelingProperties.put(key, value);
+	}
+
+	private void updateProperty(String key, String value) throws IOException {
+
+		String fileName = ContextParametersRegistry.getInstance()
+									.getContextParameters(contextId)
+									.getParameterValue(ContextParameter.USER_CONFIG_DIRECTORY)
+									+ "/modeling.properties";
+		File file = new File(fileName);
+		BufferedReader reader = new BufferedReader(new FileReader(fileName));
+		String line = null;
+		StringBuffer buf = new StringBuffer();
+		try {
+			while ((line = reader.readLine()) != null) {
+				line = line.trim();
+				if (!line.startsWith("#") && line.contains(key)) {
+					buf.append(key + "=" + value);
+				} else {
+					buf.append(line);
+				}
+				buf.append(System.getProperty("line.separator"));
+			}
+			reader.close();
+			PrintWriter out = new PrintWriter(new BufferedWriter(
+					new FileWriter(file, false)));
+			out.write(buf.toString());
+			out.close();
+		} catch (IOException e) {
+			logger.error("Error updating property: " + key, e);
+		}
+	}
 }

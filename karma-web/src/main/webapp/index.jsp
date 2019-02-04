@@ -67,7 +67,6 @@ and related projects, please see: http://www.isi.edu/integration
         <link rel="stylesheet" type="text/css" href="./css/ServiceImport.css?<jsp:include page='version.jsp' />" />
         <link rel="stylesheet" type="text/css" href="./css/headerParsingExample.css?<jsp:include page='version.jsp' />" />
         <link rel="stylesheet" type="text/css" href="./css/AlignmentHeaders.css?<jsp:include page='version.jsp' />" />
-        <link rel="stylesheet" type="text/css" href="./css/cleaning.css?<jsp:include page='version.jsp' />" />
         <link rel="stylesheet" type="text/css" href="./css/alignment.css?<jsp:include page='version.jsp' />" />
         <link rel="stylesheet" type="text/css" href="./css/d3.css?<jsp:include page='version.jsp' />" />
         <link rel="stylesheet" type="text/css" href="./css/main.css?<jsp:include page='version.jsp' />" />
@@ -139,7 +138,7 @@ and related projects, please see: http://www.isi.edu/integration
 			.wk-row-selected {
     		background-color: #EEEEEE;
 			}
-			
+
 			.table-no-border td {
 			    border-top: 0 none;
 			}
@@ -181,6 +180,21 @@ and related projects, please see: http://www.isi.edu/integration
 		            
 		            <li><a href="#" id="modelManagerButton" data-html='true' data-toggle='tooltip' data-placement='bottom'>Manage Models</a></li>
 
+		            <li class="dropdown">
+		              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Settings <b class="caret"></b></a>
+		              <ul class="dropdown-menu multi-level">
+		              	  <li><a href="#" id="displayGithubSettings">Github</a></li>
+		                  <li class="dropdown-submenu"><a href="#" id="settingDisplayRDFSLabel">Display rdfs:label</a>
+		                  	<ul class="dropdown-menu">
+		                  		<li><a href="#" id="displayRDFSLabel_labelFirst"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span>&nbsp;rdfs:label First</a></li>
+								<li><a href="#" id="displayRDFSLabel_idFirst"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span>&nbsp;Name or ID First</a></li>
+		                  	</ul>
+		                  </li>
+		                  <li><a href="#" id="r2rmlExportSuperclass"><span class="glyphicon glyphicon-ok" aria-hidden="true"></span>&nbsp;Export Superclass</a>
+		                  </li>
+		              </ul>
+		            </li>
+
 					<li><a href="#" id="resetButton" data-html='true' title='Delete all saved files,<br/>use with care!' data-toggle='tooltip' data-placement='bottom'>Reset ...</a></li>
 					
 		            <li>
@@ -199,7 +213,7 @@ and related projects, please see: http://www.isi.edu/integration
 		            </li>
 		          </ul>
 		          <ul class="nav navbar-nav navbar-middle col-sm-2">
-		            <li id="manualModeHeader" style="display:none;"><a href="#" style="cursor: none">Manual Mode</a></li>
+		            <li id="modeHeader" style="display:none;"><a href="#" style="cursor: none"></a></li>
 		          </ul>
 		          
 		          <ul class="nav navbar-nav navbar-right">
@@ -226,6 +240,7 @@ and related projects, please see: http://www.isi.edu/integration
 			  <jsp:include page="semanticTypes.jsp"></jsp:include>
 			  <jsp:include page="showModel.jsp"></jsp:include>
 			  <jsp:include page="model.jsp"></jsp:include>
+			  <jsp:include page="settings.jsp"></jsp:include>
 			  
 			  <div class="modal fade" id="karmaErrorWindow" tabindex="-1">
 			  	<div class="modal-dialog">
@@ -299,6 +314,9 @@ and related projects, please see: http://www.isi.edu/integration
             </table>
         </div>
 
+        <div id="helpDiv" style="display:none; position:absolute;left:0px; top:0px; width:100%">
+        </div>
+
 		<div id="WaitingDiv" style="display:none; position:absolute;left:0px; top:0px;width:100%; height:100%" class="waitingDiv">
 			<div style="width:10px;height:50px">&nbsp;</div>
 			<div>Loading Workspace..</div>
@@ -331,7 +349,7 @@ and related projects, please see: http://www.isi.edu/integration
 
         <script type="text/javascript" src="uiLibs/json/js/json2.js"></script>
         <script type="text/javascript" src="uiLibs/jquery/js/jquery.cookie.js"></script>
-        <script type="text/javascript" src="uiLibs/d3/js/d3.v3.min.js"></script>
+        <script type="text/javascript" src="uiLibs/d3/js/d3.v3.5.16.min.js"></script>
         <script type="text/javascript" src="uiLibs/jquery/js/jquery.iframe-transport.js"></script>
         <script type="text/javascript" src="uiLibs/ace/js/ace.js" charset="utf-8"></script>
         <script type="text/javascript" src="uiLibs/jquery/js/jquery.fileupload.js"></script>
@@ -352,7 +370,6 @@ and related projects, please see: http://www.isi.edu/integration
         <script type="text/javascript" src="js/databaseImportDialog.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/d3-model-manager.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/fileImport.js?<jsp:include page='version.jsp' />"></script>
-        <script type="text/javascript" src="js/cleaning.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/reset-options.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/cleaning-charts.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/showModel.js?<jsp:include page='version.jsp' />"></script>
@@ -363,13 +380,18 @@ and related projects, please see: http://www.isi.edu/integration
         <script type="text/javascript" src="js/semanticTypes.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/classUI.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/propertyUI.js?<jsp:include page='version.jsp' />"></script>
-        <script type="text/javascript" src="js/classDropdown.js?<jsp:include page='version.jsp' />"></script>
-        <script type="text/javascript" src="js/propertyDropdown.js?<jsp:include page='version.jsp' />"></script>
+        <script type="text/javascript" src="js/classDialog.js?<jsp:include page='version.jsp' />"></script>
+        <script type="text/javascript" src="js/classTabs.js?<jsp:include page='version.jsp' />"></script>
+        <script type="text/javascript" src="js/classFunctions.js?<jsp:include page='version.jsp' />"></script>
+        <script type="text/javascript" src="js/anchorDropdown.js?<jsp:include page='version.jsp' />"></script>
+        <script type="text/javascript" src="js/propertyDialog.js?<jsp:include page='version.jsp' />"></script>
+        <script type="text/javascript" src="js/propertyTabs.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/model-layout.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/UnconnectedNodesLayout.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/model.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/saveSvgAsPng.js?<jsp:include page='version.jsp' />"></script>
         <script type="text/javascript" src="js/historyOptions.js?<jsp:include page='version.jsp' />"></script>
+        <script type="text/javascript" src="js/settings.js?<jsp:include page='version.jsp' />"></script>
         
         <%
         if(UIConfigurationRegistry.getInstance().getUIConfiguration(ContextParametersRegistry.getInstance().getDefault().getId()).isForceModelLayoutEnabled()) {
@@ -387,6 +409,11 @@ and related projects, please see: http://www.isi.edu/integration
         	var ontologyAligment = <%=ModelingConfigurationRegistry.getInstance().getModelingConfiguration(ContextParametersRegistry.getInstance().getDefault().getId()).getOntologyAlignment()%>;
         	var knownModelsAlignment = <%=ModelingConfigurationRegistry.getInstance().getModelingConfiguration(ContextParametersRegistry.getInstance().getDefault().getId()).getKnownModelsAlignment()%>;
         	var forceLayoutEnabled = <%=UIConfigurationRegistry.getInstance().getUIConfiguration(ContextParametersRegistry.getInstance().getDefault().getId()).isForceModelLayoutEnabled()%>;
+        	var DEFAULT_PROPERTY_URI = "<%=ModelingConfigurationRegistry.getInstance().getModelingConfiguration(ContextParametersRegistry.getInstance().getDefault().getId()).getDefaultProperty()%>";
+        	var showRDFSLabel_LabelFirst = <%=UIConfigurationRegistry.getInstance().getUIConfiguration(ContextParametersRegistry.getInstance().getDefault().getId()).showRDFSLabelWithLabelFirst()%>;
+			var showRDFSLabel_IDFirst = <%=UIConfigurationRegistry.getInstance().getUIConfiguration(ContextParametersRegistry.getInstance().getDefault().getId()).showRDFSLabelWithIDFirst()%>;
+			var r2rml_export_superclass = <%=ModelingConfigurationRegistry.getInstance().getModelingConfiguration(ContextParametersRegistry.getInstance().getDefault().getId()).getR2rmlExportSuperClass()%>;
+
             $(function() {
                 // Clear the workspace when closing the window
                 $(window).bind("beforeunload", function() {
@@ -478,8 +505,12 @@ and related projects, please see: http://www.isi.edu/integration
                     .scroll(startPositionFooter)
                     .resize(startPositionFooter);
             	
-            	if(!ontologyAligment && !knownModelsAlignment)
-            		manualAlignHeader();
+            	if(ontologyAligment || knownModelsAlignment)
+            		showModeHeader("Automatic Mode");
+
+            	loadPropertiesForCache();
+            	Settings.getInstance().setDisplayRDFSLabel(showRDFSLabel_LabelFirst, showRDFSLabel_IDFirst);
+                Settings.getInstance().setDisplaySuperclass(r2rml_export_superclass);
 			});
             
             var footerPositionTimer = null;
@@ -521,20 +552,30 @@ and related projects, please see: http://www.isi.edu/integration
                
        		}
             
-            function manualAlignHeader() {
-            	$("#manualModeHeader").show();
+            function showModeHeader(headerTxt) {
+            	$("#modeHeader a").html(headerTxt);
+            	$("#modeHeader").show();
+            }
+
+            function loadPropertiesForCache() {
+            	$("div#WaitingDiv").show();
+				window.setTimeout(function() {
+					PropertyDialog.getInstance();
+					ClassDialog.getInstance();
+					$("div#WaitingDiv").hide();
+				}, 10);
             }
 		</script>
 		<script type="text/javascript">
-			if(googleEarthEnabled) {
-				google.load("earth", "1", {
-					"callback" : earthCallback
-				});
-			}
+			// if(googleEarthEnabled) {
+			// 	google.load("earth", "1", {
+			// 		"callback" : earthCallback
+			// 	});
+			// }
 			
-			function earthCallback() {
-				// alert("Earth namespace loaded!");
-			}
+			// function earthCallback() {
+			// 	// alert("Earth namespace loaded!");
+			// }
 		</script>
 
         <script type="text/javascript">

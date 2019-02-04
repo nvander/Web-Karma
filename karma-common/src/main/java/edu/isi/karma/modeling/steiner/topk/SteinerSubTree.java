@@ -11,14 +11,14 @@ import java.util.TreeSet;
  * @author kasneci
  *
  */
-public abstract class SteinerSubTree implements Comparable<SteinerSubTree>{
+public abstract class SteinerSubTree implements Comparable<SteinerSubTree>, Cloneable {
 
 	protected double score;
 	private Set<SteinerNode> nodes;
 	
 	
 	public SteinerSubTree() {
-		nodes= new TreeSet<SteinerNode>();
+		nodes= new TreeSet<>();
 		score=0;
 	}
 	
@@ -37,7 +37,7 @@ public abstract class SteinerSubTree implements Comparable<SteinerSubTree>{
 	 * @return all edges of this subtree
 	 */
 	public Set<SteinerEdge> getEdges(){
-		Set<SteinerEdge> stEdges = new TreeSet<SteinerEdge>();
+		Set<SteinerEdge> stEdges = new TreeSet<>();
 		for(SteinerNode n: getNodes())
 			for(SteinerEdge e: n.edges)
 				stEdges.add(e);

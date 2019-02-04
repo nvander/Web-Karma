@@ -53,6 +53,9 @@ public class ExportCSVUtil {
 
 	private static Logger logger = LoggerFactory.getLogger(ExportCSVUtil.class);
 
+	private ExportCSVUtil() {
+	}
+
 	/**
 	 * @author shri
 	 * 
@@ -68,7 +71,7 @@ public class ExportCSVUtil {
 	public static HashMap<String, String> generateCSVQuery(Workspace workspace, final String worksheetId, final String rootNodeId,
 			final ArrayList<HashMap<String, String>> columnList, final String graphUrl) {
 	
-		HashMap<String, String> retVal = new HashMap<String, String>();
+		HashMap<String, String> retVal = new HashMap<>();
 		Worksheet worksheet = workspace.getWorksheet(worksheetId);
 		// Get the alignment for this Worksheet
 		Alignment alignment = AlignmentManager.Instance().getAlignment(AlignmentManager.
@@ -88,9 +91,9 @@ public class ExportCSVUtil {
 			if (prefObject != null) {
 				namespace = prefObject.getString(PreferencesKeys.rdfNamespace.name());
 				prefix = prefObject.getString(PreferencesKeys.rdfPrefix.name());
-				namespace = ((namespace == null) || (namespace.equals(""))) ? 
+				namespace = (namespace == null || namespace.equals("")) ? 
 						Namespaces.KARMA_DEV : namespace;
-				prefix = ((prefix == null) || (prefix.equals(""))) ? 
+				prefix = (prefix == null || prefix.equals("")) ? 
 						Prefixes.KARMA_DEV : prefix;
 			} else {
 				namespace = Namespaces.KARMA_DEV;
@@ -148,7 +151,7 @@ public class ExportCSVUtil {
 	
 	public static HashMap<String, String> generateCSVFile(Workspace workspace, final String worksheetId, final String rootNodeId,
 			final ArrayList<HashMap<String, String>> columnList, final String graphUrl, final String tripleStoreUrl, final String csvFilePath) {
-		HashMap<String, String> retVal = new HashMap<String, String>();
+		HashMap<String, String> retVal = new HashMap<>();
 		HashMap<String, String> query = generateCSVQuery(workspace, worksheetId, rootNodeId, columnList, graphUrl);
 		try {
 			if(query.containsKey("Error")) {

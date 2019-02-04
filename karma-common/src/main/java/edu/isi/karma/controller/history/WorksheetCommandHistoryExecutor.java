@@ -45,7 +45,6 @@ import edu.isi.karma.rep.HNode;
 import edu.isi.karma.rep.HNode.HNodeType;
 import edu.isi.karma.rep.HTable;
 import edu.isi.karma.rep.Workspace;
-import edu.isi.karma.util.Util;
 import edu.isi.karma.webserver.ExecutionController;
 import edu.isi.karma.webserver.KarmaException;
 import edu.isi.karma.webserver.WorkspaceRegistry;
@@ -59,7 +58,7 @@ public class WorksheetCommandHistoryExecutor {
 	private static String[] commandsIgnoreNodeBefore = { "AddColumnCommand",
 		"SubmitPythonTransformationCommand"
 	};
-
+	
 	public WorksheetCommandHistoryExecutor(String worksheetId, Workspace workspace) {
 		super();
 		this.worksheetId = worksheetId;
@@ -67,9 +66,10 @@ public class WorksheetCommandHistoryExecutor {
 	}
 
 	public UpdateContainer executeCommandsByTags(
-			List<CommandTag> tags, JSONArray historyJson) throws JSONException,
+			List<CommandTag> tagsToAdd, List<CommandTag> tagsToRemove, JSONArray historyJson) throws JSONException,
 			KarmaException, CommandException {
-		JSONArray filteredCommands = HistoryJsonUtil.filterCommandsByTag(tags, historyJson);
+		JSONArray filteredCommands = HistoryJsonUtil.filterCommandsByTag(tagsToAdd, historyJson);
+		filteredCommands = HistoryJsonUtil.removeCommandsByTag(tagsToRemove, filteredCommands);
 		return executeAllCommands(filteredCommands);
 	}
 	
@@ -119,8 +119,7 @@ public class WorksheetCommandHistoryExecutor {
 							uc.append(workspace.getCommandHistory().doCommand(comm, workspace, saveToHistory));
 							comm.setExecutedInBatch(false);
 						} catch(Exception e) {
-							logger.error("Error executing command: "+ commandName + ". Please notify this error");
-							Util.logException(logger, e);
+							logger.error("Error executing command: "+ commandName + ". Please notify this error. \nInputs:" + inputParamArr, e);
 							//make these InfoUpdates so that the UI can still process the rest of the model
 							return new UpdateContainer(new TrivialErrorUpdate("Error executing command " + commandName + " from history"));
 						}
@@ -181,13 +180,8 @@ public class WorksheetCommandHistoryExecutor {
 					logger.debug("Column being normalized: "+ nameObjColumnName);
 					HNode node = hTable.getHNodeFromColumnName(nameObjColumnName);
 					if(node == null) { //Because add column can happen even if the column after which it is to be added is not present
-						AbstractUpdate update = new TrivialErrorUpdate(nameObjColumnName + " does not exist, using empty values");
-						if (uc == null)
-							uc = new UpdateContainer(update);
-						else
-							uc.add(update);
 						if (addIfNonExist) {
-							node = hTable.addHNode(nameObjColumnName, HNodeType.Regular, workspace.getWorksheet(worksheetId), workspace.getFactory());		
+							node = hTable.addHNode(nameObjColumnName, HNodeType.Transformation, workspace.getWorksheet(worksheetId), workspace.getFactory());		
 						}
 						else {
 							continue;
@@ -219,7 +213,7 @@ public class WorksheetCommandHistoryExecutor {
 				String predicate = link.getString("predicate");
 				Object object = link.get("object");
 				
-				String objectHNodeId = null, subjectHNodeId = null;
+				String objectHNodeId, subjectHNodeId;
 				if(subject instanceof JSONArray) {
 					subjectHNodeId = generateHNodeId((JSONArray)subject, hTable, addIfNonExist, uc);
 				} else {

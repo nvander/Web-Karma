@@ -23,13 +23,11 @@ package edu.isi.karma.kr2rml.writer;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.collections.IteratorUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -40,7 +38,8 @@ import edu.isi.karma.modeling.Uris;
 
 public class JSONKR2RMLRDFWriter extends SFKR2RMLRDFWriter<JSONObject> {
 
-	private Map<String, String> contextInverseMapping = new HashMap<String, String>();
+	private Map<String, String> contextInverseAtIdMapping = new HashMap<>();
+	private Map<String, Boolean> contextInverseAtContainerMapping = new HashMap<>();
 	private URL location;
 	private JSONObject context;
 	private String atType = "@type";
@@ -51,6 +50,10 @@ public class JSONKR2RMLRDFWriter extends SFKR2RMLRDFWriter<JSONObject> {
 
 	public JSONKR2RMLRDFWriter (PrintWriter outWriter, String baseURI) {
 		super(outWriter, baseURI);
+	}
+	
+	public JSONKR2RMLRDFWriter (PrintWriter outWriter, String baseURI, boolean disableNesting) {
+		super(outWriter, baseURI, disableNesting);
 	}
 
 	public void setGlobalContext(JSONObject context, ContextIdentifier contextId) {
@@ -71,7 +74,12 @@ public class JSONKR2RMLRDFWriter extends SFKR2RMLRDFWriter<JSONObject> {
 					if (c.get(key).toString().equals("@type")) {
 						atType = key;
 					}
-					contextInverseMapping.put(c.getJSONObject(key).getString("@id"), key);
+					if (c.getJSONObject(key).has("@id")) {
+						contextInverseAtIdMapping.put(c.getJSONObject(key).getString("@id"), key);
+					}
+					if (c.getJSONObject(key).has("@container") && c.getJSONObject(key).get("@container").equals("@set")) {
+						contextInverseAtContainerMapping.put(key, true);
+					}
 				}catch(Exception e) 
 				{
 
@@ -82,16 +90,21 @@ public class JSONKR2RMLRDFWriter extends SFKR2RMLRDFWriter<JSONObject> {
 
 	@Override
 	protected void addValue(PredicateObjectMap pom, JSONObject subject, String predicateUri, Object object) {
-		if (subject.has(generateShortHandURIFromContext(predicateUri)) || predicateUri.contains(Uris.RDF_TYPE_URI)) {
-			String shortHandPredicateURI = generateShortHandURIFromContext(predicateUri);
+		String shortHandPredicateURI = generateShortHandURIFromContext(predicateUri);
+		if (subject.has(shortHandPredicateURI)
+				|| predicateUri.contains(Uris.RDF_TYPE_URI)
+				|| Objects.equals(contextInverseAtContainerMapping.get(shortHandPredicateURI), true)) {
 			addValueToArray(pom, subject, object,
 					shortHandPredicateURI);
 		}
 		else
 		{
-			String shortHandPredicateURI = generateShortHandURIFromContext(predicateUri);
-			if (object instanceof String) {	
+			if (object instanceof String) {
 				object = normalizeURI((String)object);
+			}
+			else if(object instanceof JSONObject && disableNesting)
+			{
+				object = getNewObject(null,((JSONObject)object).get(atId).toString());
 			}
 			subject.put(shortHandPredicateURI, object);
 		}
@@ -126,20 +139,37 @@ public class JSONKR2RMLRDFWriter extends SFKR2RMLRDFWriter<JSONObject> {
 		if (object instanceof String) {	
 			object = normalizeURI((String)object);
 		}
+		else if(object instanceof JSONObject && disableNesting)
+		{
+			object = getNewObject(null,((JSONObject)object).get(atId).toString());
+		}			
+		
+		if (shortHandPredicateURI.equalsIgnoreCase("rdf:type") && subject.has(atType)) 
+			array = subject.getJSONArray(atType);
+				
 		array.put(object);
 		if (shortHandPredicateURI.equalsIgnoreCase("rdf:type")) {
 			int size = array.length();
+			JSONArray newTypeArray = new JSONArray();
 			for (int i = 0; i < size; i++) {
-				String t = generateShortHandURIFromContext(array.remove(0).toString());
-				array.put(t);
+				newTypeArray.put(generateShortHandURIFromContext(array.get(i).toString()));
 			}
-			subject.put(atType, array);
+			subject.put(atType, newTypeArray);
 		}
 		else {
 			subject.put(shortHandPredicateURI, array);
 		}
 	}
 
+	@Override
+	protected Object generateLanguageLiteral(Object literal, String language) {
+		//Generate expanded form JSON for the language
+		JSONObject literalJSON = new JSONObject();
+		literalJSON.put("@value", literal);
+		literalJSON.put("@language", language);
+		return literalJSON;
+	}
+	
 	@Override
 	public void finishRow() {
 		for(ConcurrentHashMap<String, JSONObject> records : this.rootObjectsByTriplesMapId.values())
@@ -149,8 +179,17 @@ public class JSONKR2RMLRDFWriter extends SFKR2RMLRDFWriter<JSONObject> {
 				if (value.has(atId)) {
 					String Id = value.get(atId).toString();
 					if (!isValidURI(Id)) {
-						value.remove(atId);
+						if(!disableNesting)
+						{
+							value.remove(atId);
+						}
+						else if(!isValidBlankNode(Id))
+						{
+							value.remove(atId);
+						}
 					}
+					
+					
 				}
 				collapseSameType(value);
 				if (!firstObject) {
@@ -177,6 +216,11 @@ public class JSONKR2RMLRDFWriter extends SFKR2RMLRDFWriter<JSONObject> {
 		this.generatedObjectsWithoutTriplesMap.clear();
 	}
 
+	private boolean isValidBlankNode(String id) {
+		
+		return id.startsWith("_:");
+	}
+
 	@Override
 	public void flush() {
 		outWriter.flush();
@@ -190,17 +234,17 @@ public class JSONKR2RMLRDFWriter extends SFKR2RMLRDFWriter<JSONObject> {
 		outWriter.close();
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	protected void collapseSameType(JSONObject obj) {
-		for (Object key : new HashSet(obj.keySet())) {
+		for (Object key : IteratorUtils.toList(obj.keys())) {
 			Object value = obj.get((String)key);
 			if (value instanceof JSONArray) {
 				JSONArray array = (JSONArray)value;
-				Map<String, Object> types = new HashMap<String, Object>();
+				JSONArray newArray = new JSONArray();
+				Map<String, Object> types = new HashMap<>();
 				int length = array.length();
 				for (int i = 0; i < length; i++) {
-					Object o = array.remove(0);
+					Object o = array.get(i);
 					if (o instanceof JSONObject) {
 						JSONObject jsonObjectValue = (JSONObject)o;
 						if (jsonObjectValue.has(atId)) {
@@ -232,14 +276,20 @@ public class JSONKR2RMLRDFWriter extends SFKR2RMLRDFWriter<JSONObject> {
 						types.put(o.toString(), o);
 					}
 				}
-				if (types.size() > 1) {
+				//Let atType always be arrays
+				if (types.size() > 1 || key.equals(atType) || Objects.equals(contextInverseAtContainerMapping.get(key), true)) {
 					for (Entry<String, Object> type : types.entrySet()) {
-						array.put(type.getValue());
+						newArray.put(type.getValue());
 					}
+					obj.put((String)key, newArray);
 				}
 				else if (types.values().iterator().hasNext()){
 					Object o = types.values().iterator().next();
 					obj.put((String)key, o);
+				}
+				else
+				{
+					obj.put((String)key, newArray);
 				}
 			}
 			if (value instanceof JSONObject)
@@ -315,7 +365,7 @@ public class JSONKR2RMLRDFWriter extends SFKR2RMLRDFWriter<JSONObject> {
 		if (uri.startsWith("<") && uri.endsWith(">")) { 
 			uri = uri.substring(1, uri.length() - 1);		
 		}
-		String shortHandPredicateURI = contextInverseMapping.get(uri);
+		String shortHandPredicateURI = contextInverseAtIdMapping.get(uri);
 		if (shortHandPredicateURI == null) {
 			shortHandPredicateURI = shortHandURIGenerator.getShortHand(uri).toString();
 		}

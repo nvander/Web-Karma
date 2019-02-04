@@ -23,6 +23,7 @@ package edu.isi.karma.modeling.semantictypes;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.json.JSONArray;
@@ -41,7 +42,7 @@ import edu.isi.karma.util.Util;
 
 public class SemanticTypeColumnModel implements Jsonizable {
 
-	private final HashMap<String, Double> scoreMap = new HashMap<String, Double>();
+	private final HashMap<String, Double> scoreMap = new HashMap<>();
 
 	public SemanticTypeColumnModel(List<SemanticTypeLabel> labels) {
 		for (int i = 0; i < labels.size(); i++) {
@@ -61,22 +62,55 @@ public class SemanticTypeColumnModel implements Jsonizable {
 	public void write(JSONWriter writer) throws JSONException {
 		writer.object();
 		writer.array();
-		for (String label : scoreMap.keySet()) {
+		for (Map.Entry<String, Double> stringDoubleEntry : scoreMap.entrySet()) {
 			writer.object();
-			writer.key(SemanticTypesUpdate.JsonKeys.FullType.name()).value(label);
-			writer.key("probability").value(scoreMap.get(label));
+			writer.key(SemanticTypesUpdate.JsonKeys.FullType.name()).value(stringDoubleEntry.getKey());
+			writer.key("probability").value(stringDoubleEntry.getValue());
 			writer.endObject();
 		}
 		writer.endArray();
 		writer.endObject();
 	}
 
+	public JSONObject getAsJSONObject(String classUri, OntologyManager ontMgr, int maxLabels) throws JSONException {
+		JSONArray arr = new JSONArray();
+		
+		// Need to sort
+		HashMap<String, Double> sortedMap = Util.sortHashMap(scoreMap);
+		for (String label : sortedMap.keySet()) {
+			double probability = scoreMap.get(label);
+			// Check if the type contains domain
+			if(label.contains("|")){
+				String domainURIStr = label.split("\\|")[0];
+				String typeURIStr = label.split("\\|")[1];
+				
+				Label domainURI = ontMgr.getUriLabel(domainURIStr);
+				Label typeURI = ontMgr.getUriLabel(typeURIStr);
+				if(domainURI == null || typeURI == null)
+					continue;
+				
+				if(domainURIStr.equals(classUri)) {
+					String clazzLocalNameWithPrefix = domainURI.getDisplayName();
+					if(domainURI.getPrefix() == null) 
+						clazzLocalNameWithPrefix = domainURI.getUri() + "/" + domainURI.getLocalName();
+					insertSemanticTypeSuggestion(arr, clazzLocalNameWithPrefix, domainURI.getRdfsLabel(), domainURIStr, domainURIStr, 
+							typeURI.getDisplayName(), typeURI.getRdfsLabel(), typeURIStr, probability);
+					if(arr.length() == maxLabels)
+						break;
+				}
+			}
+		}
+		JSONObject obj = new JSONObject();
+		obj.put("Labels", arr);
+		return obj;
+	}
+	
 	public JSONObject getAsJSONObject(OntologyManager ontMgr, Alignment alignment) throws JSONException {
 		JSONObject obj = new JSONObject();
 		JSONArray arr = new JSONArray();
 		
 		/** Create a set of node ids of internal nodes of Steiner Tree **/
-		Set<String> steinerTreeNodeIds = new HashSet<String>();
+		Set<String> steinerTreeNodeIds = new HashSet<>();
 		if (alignment != null && !alignment.isEmpty()) {
 			for (Node node: alignment.getSteinerTree().vertexSet()) {
 				if (node.getType() == NodeType.InternalNode) {
@@ -104,33 +138,43 @@ public class SemanticTypeColumnModel implements Jsonizable {
 				int graphLastIndex = alignment.getLastIndexOfNodeUri(domainURI.getUri());
 				if (graphLastIndex == -1) { // No instance present in the graph
 					insertSemanticTypeSuggestion(arr, clazzLocalNameWithPrefix + "1 (add)", 
-							domainURI.getUri(), domainURI.getUri() + "1",
-							typeURI.getDisplayName(), label.split("\\|")[1], probability);
+							domainURI.getRdfsLabel(), domainURI.getUri(), domainURI.getUri() + "1",
+							typeURI.getDisplayName(), typeURI.getRdfsLabel(), label.split("\\|")[1], probability);
 				} else {
 					boolean hasLastNodeFromSteinerTree = false;
 					for (int i=1; i<= graphLastIndex; i++) {
 						
 						if (steinerTreeNodeIds.contains(domainURI.getUri() + i)) {
 							insertSemanticTypeSuggestion(arr, clazzLocalNameWithPrefix + i, 
+									domainURI.getRdfsLabel(),
 									domainURI.getUri(),
 									domainURI.getUri() + i, 
-									typeURI.getDisplayName(), label.split("\\|")[1], probability);
+									typeURI.getDisplayName(),
+									typeURI.getRdfsLabel(),
+									label.split("\\|")[1], probability);
 							if (i == graphLastIndex)
 								hasLastNodeFromSteinerTree = true;
 						} else {
 							Node graphNode = alignment.getNodeById(domainURI.getUri() + i);
 							if (graphNode != null)
 								insertSemanticTypeSuggestion(arr, clazzLocalNameWithPrefix + i + " (add)", 
+									graphNode.getLabel().getRdfsLabel(),
 									graphNode.getUri(),
 									graphNode.getId(), 
-									typeURI.getDisplayName(), label.split("\\|")[1], probability);
+									typeURI.getDisplayName(), 
+									typeURI.getRdfsLabel(),
+									label.split("\\|")[1], probability);
 						}
 					}
 					// Add an option to add one more node for the domain
 					if (hasLastNodeFromSteinerTree)
 						insertSemanticTypeSuggestion(arr, clazzLocalNameWithPrefix + (graphLastIndex+1) + " (add)", 
-								domainURI.getUri(), domainURI.getUri() + (graphLastIndex+1),
-							typeURI.getDisplayName(), label.split("\\|")[1], probability);
+								domainURI.getRdfsLabel(),
+								domainURI.getUri(), 
+								domainURI.getUri() + (graphLastIndex+1),
+								typeURI.getDisplayName(), 
+								typeURI.getRdfsLabel(),
+								label.split("\\|")[1], probability);
 				}
 			} else {
 				Label typeURI = ontMgr.getUriLabel(label);
@@ -141,21 +185,29 @@ public class SemanticTypeColumnModel implements Jsonizable {
 				
 				int graphLastIndex = alignment.getLastIndexOfNodeUri(typeURI.getUri());
 				if (graphLastIndex == -1) { // No instance present in the graph
-					insertSemanticTypeSuggestion(arr, "", "", clazzLocalNameWithPrefix + "1 (add)", typeURI.getUri(), typeURI.getUri() + "1", probability);
+					insertSemanticTypeSuggestion(arr, "", "", "", clazzLocalNameWithPrefix + "1 (add)", 
+							typeURI.getRdfsLabel(),
+							typeURI.getUri(), typeURI.getUri() + "1", probability);
 				} else {
 					boolean hasLastNodeFromSteinerTree = false;
 					for (int i=1; i<= graphLastIndex; i++) {
 						if (steinerTreeNodeIds.contains(typeURI.getUri() + (graphLastIndex))) {
-							insertSemanticTypeSuggestion(arr, "", "", clazzLocalNameWithPrefix + i, typeURI.getUri(), typeURI.getUri() + i, probability);
+							insertSemanticTypeSuggestion(arr, "", "", "", clazzLocalNameWithPrefix + i, 
+									typeURI.getRdfsLabel(),
+									typeURI.getUri(), typeURI.getUri() + i, probability);
 						} else {
 							Node graphNode = alignment.getNodeById(typeURI.getUri() + i);
 							if (graphNode != null)
-								insertSemanticTypeSuggestion(arr, "", "", clazzLocalNameWithPrefix + i + " (add)", graphNode.getUri(), graphNode.getId(), probability);
+								insertSemanticTypeSuggestion(arr, "", "", "", clazzLocalNameWithPrefix + i + " (add)", 
+										graphNode.getLabel().getRdfsLabel(),
+										graphNode.getUri(), graphNode.getId(), probability);
 						}
 					}
 					// Add an option to add one more node for the domain
 					if (hasLastNodeFromSteinerTree)
-						insertSemanticTypeSuggestion(arr, "", "", clazzLocalNameWithPrefix + (graphLastIndex+1) + " (add)", typeURI.getUri(), typeURI.getUri() + (graphLastIndex+1), probability);
+						insertSemanticTypeSuggestion(arr, "", "", "", clazzLocalNameWithPrefix + (graphLastIndex+1) + " (add)", 
+								typeURI.getRdfsLabel(),
+								typeURI.getUri(), typeURI.getUri() + (graphLastIndex+1), probability);
 				}
 			}
 		}
@@ -163,13 +215,17 @@ public class SemanticTypeColumnModel implements Jsonizable {
 		return obj;
 	}
 	
-	private void insertSemanticTypeSuggestion(JSONArray arr, String domainDisplayLabel, 
-			String domainUri, String domainId, String typeDisplayLabel, String type, double probability) throws JSONException {
+	private void insertSemanticTypeSuggestion(JSONArray arr, 
+			String domainDisplayLabel, String domainRDFSLabel, String domainUri, String domainId, 
+			String typeDisplayLabel, String typeRDFSLabel, String type, 
+			double probability) throws JSONException {
 		JSONObject typeObj = new JSONObject();
 		typeObj.put(SemanticTypesUpdate.JsonKeys.DisplayDomainLabel.name(), domainDisplayLabel);
+		typeObj.put(SemanticTypesUpdate.JsonKeys.DomainRDFSLabel.name(), domainRDFSLabel);
 		typeObj.put(SemanticTypesUpdate.JsonKeys.DomainUri.name(), domainUri);
 		typeObj.put(SemanticTypesUpdate.JsonKeys.DomainId.name(), domainId);
 		typeObj.put(SemanticTypesUpdate.JsonKeys.DisplayLabel.name(), typeDisplayLabel);
+		typeObj.put(SemanticTypesUpdate.JsonKeys.DisplayRDFSLabel.name(), typeRDFSLabel);
 		typeObj.put(SemanticTypesUpdate.JsonKeys.FullType.name(), type);
 		typeObj.put("Probability", probability);
 		arr.put(typeObj);

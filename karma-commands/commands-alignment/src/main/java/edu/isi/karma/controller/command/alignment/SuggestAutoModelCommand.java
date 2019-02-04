@@ -46,7 +46,6 @@ import edu.isi.karma.rep.HNode;
 import edu.isi.karma.rep.Worksheet;
 import edu.isi.karma.rep.Workspace;
 import edu.isi.karma.rep.alignment.ColumnNode;
-import edu.isi.karma.rep.alignment.ColumnSemanticTypeStatus;
 import edu.isi.karma.rep.alignment.Label;
 import edu.isi.karma.rep.alignment.LabeledLink;
 import edu.isi.karma.rep.alignment.Node;
@@ -117,19 +116,19 @@ public class SuggestAutoModelCommand extends WorksheetCommand {
 		Node classNode = alignment.addInternalNode(internalNodeLabel);
 		
 		// Create column nodes for all columns 
-		List<HNode> sortedLeafHNodes = new ArrayList<HNode>();
+		List<HNode> sortedLeafHNodes = new ArrayList<>();
 		worksheet.getHeaders().getSortedLeafHNodes(sortedLeafHNodes);
 		for (HNode hNode : sortedLeafHNodes){
 			String columnName = hNode.getColumnName().trim().replaceAll(" ", "_");
 			ColumnNode columnNode = alignment.getColumnNodeByHNodeId(hNode.getId());
 			
-			List<LabeledLink> columnNodeIncomingLinks = alignment.getIncomingLinksInGraph(columnNode.getId());
+			List<LabeledLink> columnNodeIncomingLinks = alignment.getGraphBuilder().getIncomingLinks(columnNode.getId());
 			if (columnNodeIncomingLinks == null || columnNodeIncomingLinks.isEmpty()) { // SemanticType not yet assigned
 				Label propertyLabel = new Label(ns + columnName, ns, "karma");
-				alignment.addDataPropertyLink(classNode, columnNode, propertyLabel);
+				alignment.addDataPropertyLink(classNode, columnNode, propertyLabel, false);
 				
 				// Create a semantic type object
-				SemanticType type = new SemanticType(hNode.getId(), propertyLabel, internalNodeLabel, SemanticType.Origin.User, 1.0);
+				SemanticType type = new SemanticType(hNode.getId(), propertyLabel, internalNodeLabel, classNode.getId(), false, SemanticType.Origin.User, 1.0);
 				worksheet.getSemanticTypes().addType(type);
 				
 				List<SemanticType> userSemanticTypes = columnNode.getUserSemanticTypes();

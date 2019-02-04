@@ -52,11 +52,6 @@ function TableColumnOptions(wsId, wsColumnId, wsColumnTitle, isLeafNode, isOutof
 			func: aggregation,
 			leafOnly: true,
 			leafExcluded: false
-		}, {
-			name: "Transform",
-			func: transform,
-			leafOnly: true,
-			leafExcluded: false
 		},
 		//{name:"Generate Cluster Values", func:clusterValues, leafOnly:true, leafExcluded: false},
 		//{name:"Merge Cluster Values", func:mergeValues, leafOnly:true, leafExcluded: false},
@@ -101,23 +96,14 @@ function TableColumnOptions(wsId, wsColumnId, wsColumnTitle, isLeafNode, isOutof
 			leafOnly: false,
 			leafExcluded: true
 		}, {
-			name: "Selection",
+			name: "Filters",
 			func: undefined,
 			addLevel: true,
 			leafOnly: false,
 			leafExcluded: true,
 			levels: [{
-				name: "Add Rows",
+				name: "Add/Edit",
 				func: addRows
-			}, {
-				name: "Intersect Rows",
-				func: intersectRows
-			}, {
-				name: "Subtract Rows",
-				func: subtractRows
-			}, {
-				name: "Invert",
-				func: invertRows
 			}, {
 				name: "Clear",
 				func: undefined,
@@ -144,33 +130,9 @@ function TableColumnOptions(wsId, wsColumnId, wsColumnTitle, isLeafNode, isOutof
 		PyTransformSelectionDialog.getInstance(wsId, wsColumnId).show();
 	}
 
-	function intersectRows() {
-		hideDropdown();
-		$("#pyTransformSelectionDialog").data("operation", "Intersect");
-		PyTransformSelectionDialog.getInstance(wsId, wsColumnId).show();
-	}
-
-	function subtractRows() {
-		hideDropdown();
-		$("#pyTransformSelectionDialog").data("operation", "Subtract");
-		PyTransformSelectionDialog.getInstance(wsId, wsColumnId).show();
-	}
-
 	function aggregation() {
 		hideDropdown();
 		AggregationDialog.getInstance().show(wsId, wsColumnId, wsColumnTitle);
-	}
-
-	function invertRows() {
-		hideDropdown();
-		var headers = getColumnHeadingsForColumn(wsId, wsColumnId, "GroupBy");
-		var info = generateInfoObject(wsId, headers[0]['HNodeId'], "OperateSelectionCommand");
-		var newInfo = info['newInfo'];
-		newInfo.push(getParamObject("pythonCode", "", "other"));
-		newInfo.push(getParamObject("operation", "Invert", "other"));
-		info["newInfo"] = JSON.stringify(newInfo);
-		showLoading(worksheetId);
-		sendRequest(info, worksheetId);
 	}
 
 	function refreshRows() {
@@ -294,12 +256,6 @@ function TableColumnOptions(wsId, wsColumnId, wsColumnTitle, isLeafNode, isOutof
 	function splitValue() {
 		hideDropdown();
 		SplitValueDialog.getInstance().show(worksheetId, columnId);
-		return false;
-	}
-
-	function transform() {
-		hideDropdown();
-		TransformColumnDialog.getInstance().show(worksheetId, columnId);
 		return false;
 	}
 
@@ -743,11 +699,13 @@ var SplitValueDialog = (function() {
 			
 			if (!delimiter) {
 				validationResult = false;
-			} else if (delimiter != "space" && delimiter != "tab" && delimiter.length != 1) {
+			} else if (delimiter != "space" && delimiter != "tab" 
+				&& delimiter != "character" && delimiter.indexOf("regex:") != 0
+				&& delimiter.length != 1) {
 				validationResult = false;
 			}
 			if (!validationResult) {
-				showError("Length of the delimter should be 1");
+				showError("Length of the delimter should be 1 or it should start with regex:");
 				$("#valueSplitDelimiter", dialog).focus();
 				return false;
 			}
@@ -857,7 +815,7 @@ var PyTransformDialog = (function() {
 				var hNode = $("td#" + columnId);
 				
 				if (hNode.data("pythonTransformation"))
-					initPyCode = hNode.data("pythonTransformation"); 
+					initPyCode = hNode.data("pythonTransformation");
 				else
 					initPyCode = "return getValue(\"" + columnName + "\")";
 
@@ -1178,12 +1136,13 @@ var ExtractEntitiesDialog = (function() {
 
 				$.each(jsonresp, function(index, data) {
 					var row = $("<div>").addClass("checkbox");
-					var label = $("<label>").text(data.capability);
+					var label = $("<label>");
 					var input = $("<input>")
 						.attr("type", "checkbox")
 						.attr("id", "selectentities")
 						.attr("value", data.capability);
 					label.append(input);
+					label.append($("<span>").html(data.capability));
 					row.append(label);
 					dialogContent.append(row);
 				});
@@ -1755,6 +1714,8 @@ var PyTransformSelectionDialog = (function() {
 		function init(wsId, colId) {
 			worksheetId = wsId;
 			columnId = colId;
+			var hNode = $("td#" + columnId);
+
 			headers = getColumnHeadingsForColumn(worksheetId, columnId, "GroupBy");
 			console.log(headers);
 			console.log(headers);
@@ -1769,7 +1730,13 @@ var PyTransformSelectionDialog = (function() {
 				editor.getSession().setMode("ace/mode/python");
 				editor.getSession().setUseWrapMode(true);
 			}
-			editor.getSession().setValue("return getValue(\"" + headers[0]['ColumnName'] + "\")");
+			if (hNode.data("selectionPyCode")) {
+				initPyCode = hNode.data("selectionPyCode");
+			}
+			else {
+				initPyCode = "return getValue(\"" + headers[0]['ColumnName'] + "\")";
+			}
+			editor.getSession().setValue(initPyCode);
 			dialog.on("resize", function(event, ui) {
 				editor.resize();
 			});

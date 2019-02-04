@@ -52,6 +52,7 @@ public class DatabaseTableImport extends Import {
     private String password;
     private String dBorSIDName;
     private String tableName;
+    private String encoding;
 
     //private static Logger logger = LoggerFactory.getLogger(DatabaseTableImport.class);
     public DatabaseTableImport(DBType dbType, String hostname, int portnumber,
@@ -65,8 +66,12 @@ public class DatabaseTableImport extends Import {
         this.password = password;
         this.dBorSIDName = dBorSIDName;
         this.tableName = tableName;
+        this.encoding = encoding;
     }
 
+    public DatabaseTableImport duplicate() {
+    	return new DatabaseTableImport(dbType, hostname, portnumber, username, password, dBorSIDName, tableName, workspace, encoding);
+    }
 
     @Override
     public Worksheet generateWorksheet() throws KarmaException {
@@ -96,13 +101,13 @@ public class DatabaseTableImport extends Import {
         return generateWorksheet(dbUtil, data);
     }
 
-    private Worksheet generateWorksheet(AbstractJDBCUtil dbUtil, ArrayList<ArrayList<String>> data)
+    private Worksheet generateWorksheet(AbstractJDBCUtil dbUtil, List<ArrayList<String>> data)
     {
 	    /**
 	     * Add the headers *
 	     */
 	    HTable headers = getWorksheet().getHeaders();
-	    List<String> headersList = new ArrayList<String>();
+	    List<String> headersList = new ArrayList<>();
 	    for (int i = 0; i < data.get(0).size(); i++)
 	    {
 		    HNode hNode = null;
@@ -117,7 +122,7 @@ public class DatabaseTableImport extends Import {
 	    for (int i = 1; i < data.size(); i++)
 	    {
 		    Row row = dataTable.addRow(getFactory());
-		    ArrayList<String> rowData = data.get(i);
+		    List<String> rowData = data.get(i);
 		    for (int j = 0; j < rowData.size(); j++)
 		    {
 			    row.setValue(headersList.get(j), rowData.get(j), getFactory());

@@ -38,7 +38,7 @@ public class URIFormatter {
 	{
 		reportErrors = false;
 		replacePrefixesWithNamespaces = false;
-		prefixToNamespaceMap = new HashMap<String, String>();
+		prefixToNamespaceMap = new HashMap<>();
 		errorReport = null;
 	}
 
@@ -46,7 +46,7 @@ public class URIFormatter {
 	{
 		reportErrors = true;
 		replacePrefixesWithNamespaces = true;
-		prefixToNamespaceMap = new HashMap<String, String>();
+		prefixToNamespaceMap = new HashMap<>();
 		populatePrefixToNamespaceMap(ontMgr);
 		this.errorReport = errorReport;
 	}
@@ -54,7 +54,7 @@ public class URIFormatter {
 	{
 		reportErrors = true;
 		replacePrefixesWithNamespaces = true;
-		prefixToNamespaceMap = new HashMap<String, String>();
+		prefixToNamespaceMap = new HashMap<>();
 		populatePrefixToNamespaceMap(prefixes);
 		this.errorReport = errorReport;
 	}
@@ -88,7 +88,7 @@ public class URIFormatter {
 	}
 	
 	public static String normalizeUri(String inputUri) {
-
+		//System.out.print("Normalize:" + inputUri + " = ");
 		boolean foundIssue = false;
 		StringBuilder sb = new StringBuilder();
 		
@@ -102,7 +102,7 @@ public class URIFormatter {
 					foundIssue = true;
 					sb.append(inputUri.substring(0, i));
 				}
-				
+				sb.append("%20");
 				continue;
 			}
 			else if(value == ',' || value == '`' || value == '\'' )
@@ -112,10 +112,12 @@ public class URIFormatter {
 					foundIssue = true;
 					sb.append(inputUri.substring(0, i));
 				}
-				else
-				{
-					sb.append('_');
-				}
+				if(value == ',')
+					sb.append("%2C");
+				else if (value == '`')
+					sb.append("%60");
+				else if (value == '\'')
+					sb.append("%27");
 			}
 			else
 			{
@@ -127,10 +129,12 @@ public class URIFormatter {
 		}
 		if(foundIssue)
 		{
+			//System.out.println(sb.toString());
 			return sb.toString();
 		}
 		else
 		{
+			//System.out.println(inputUri);
 			return inputUri;
 		}
 	}
@@ -139,9 +143,9 @@ public class URIFormatter {
 	
 	private void populatePrefixToNamespaceMap(OntologyManager ontMgr) {
 		Map<String, String> prefixMapOntMgr = ontMgr.getPrefixMap(); 
-		for (String ns:prefixMapOntMgr.keySet()) {
-			String prefix = prefixMapOntMgr.get(ns);
-			this.prefixToNamespaceMap.put(prefix, ns);
+		for (Map.Entry<String, String> stringStringEntry : prefixMapOntMgr.entrySet()) {
+			String prefix = stringStringEntry.getValue();
+			this.prefixToNamespaceMap.put(prefix, stringStringEntry.getKey());
 		}
 	}
 	

@@ -173,13 +173,13 @@ public class PublishRDFCommand extends WorksheetSelectionCommand {
 
 		// Generate the KR2RML data structures for the RDF generation
 		final ErrorReport errorReport = new ErrorReport();
-		KR2RMLMappingGenerator mappingGen = null;
+		KR2RMLMappingGenerator mappingGen;
 		String url = worksheet.getMetadataContainer().getWorksheetProperties().getPropertyValue(Property.modelUrl);
 		String modelContext = worksheet.getMetadataContainer().getWorksheetProperties().getPropertyValue(Property.modelContext);
 		TripleStoreUtil utilObj = new TripleStoreUtil();
 		String modelRepoUrl = worksheet.getMetadataContainer().getWorksheetProperties().getPropertyValue(Property.modelRepository);
 		modelRepoUrl = modelRepoUrl == null || modelRepoUrl.isEmpty()? TripleStoreUtil.defaultModelsRepoUrl : modelRepoUrl;
-		Map<String, String> bloomfilterMapping = new HashMap<String, String>();
+		Map<String, String> bloomfilterMapping = new HashMap<>();
 		boolean result = true;
 		try{
 			mappingGen = new KR2RMLMappingGenerator(workspace, worksheet,
@@ -200,9 +200,10 @@ public class PublishRDFCommand extends WorksheetSelectionCommand {
 				PrintWriter pw = new PrintWriter(tmp);
 				pw.println(utilObj.getMappingFromTripleStore(modelRepoUrl, modelContext, url));
 				pw.close();
-				Model model = WorksheetR2RMLJenaModelParser.loadSourceModelIntoJenaModel(tmp.toURI().toURL());
+				R2RMLMappingIdentifier tempId = new R2RMLMappingIdentifier(tmp.toURI().toURL().toString(), tmp.toURI().toURL(), null);
+				Model model = WorksheetR2RMLJenaModelParser.loadSourceModelIntoJenaModel(tempId);
 				tmp.delete();
-				R2RMLMappingIdentifier identifier = new R2RMLMappingIdentifier(mapping.getId().getName(), new URL(url));
+				R2RMLMappingIdentifier identifier = new R2RMLMappingIdentifier(mapping.getId().getName(), new URL(url), null);
 				WorksheetR2RMLJenaModelParser parser = new WorksheetR2RMLJenaModelParser(model, identifier);
 				mapping = parser.parse();
 			} catch (Exception e) {
@@ -213,9 +214,9 @@ public class PublishRDFCommand extends WorksheetSelectionCommand {
 
 		StringWriter sw = new StringWriter();
 		// Generate the RDF using KR2RML data structures
-		long start = 0;
+		long start;
 		try {
-			List<KR2RMLRDFWriter> writers = new ArrayList<KR2RMLRDFWriter>();
+			List<KR2RMLRDFWriter> writers = new ArrayList<>();
 			File f = new File(rdfFileLocalPath);
 			File parentDir = f.getParentFile();
 			parentDir.mkdirs();

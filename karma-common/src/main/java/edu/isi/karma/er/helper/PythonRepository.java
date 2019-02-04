@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,13 +17,14 @@ import org.slf4j.LoggerFactory;
 public class PythonRepository {
 
 	private static Logger logger = LoggerFactory.getLogger(PythonRepository.class);
-	private ConcurrentHashMap<String, PyCode> scripts = new ConcurrentHashMap<String, PyCode>();
-	private ConcurrentHashMap<String, PyCode> libraryScripts = new ConcurrentHashMap<String, PyCode>();
-	private ConcurrentHashMap<String, Long> fileNameTolastTimeRead = new ConcurrentHashMap<String, Long>();
+	private ConcurrentHashMap<String, PyCode> scripts = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<String, PyCode> libraryScripts = new ConcurrentHashMap<>();
+	private ConcurrentHashMap<String, Long> fileNameTolastTimeRead = new ConcurrentHashMap<>();
+	private List<String> localKeys = Arrays.asList("workspaceid", "selectionName", "command", "worksheetId", "selection", "nodeid");
 	private boolean libraryHasBeenLoaded = false;
 	private boolean reloadLibrary = true;
-	private PyStringMap initialLocals = new PyStringMap();
-	private PythonInterpreter interpreter = PythonInterpreter.threadLocalStateInterpreter(initialLocals);
+	private PyStringMap initialLocals;
+	private PythonInterpreter interpreter;
 	private String repositoryPath;
 	
 	public PythonRepository(boolean reloadLibrary, String repositoryPath)
@@ -37,8 +37,9 @@ public class PythonRepository {
 
 	private void initialize()
 	{
-		scripts = new ConcurrentHashMap<String, PyCode>();
-
+		scripts = new ConcurrentHashMap<>();
+		initialLocals = new PyStringMap();
+		interpreter = PythonInterpreter.threadLocalStateInterpreter(initialLocals);
 		
 		compileAndAddToRepository(interpreter, PythonTransformationHelper.getImportStatements());
 		compileAndAddToRepository(interpreter, PythonTransformationHelper.getRowIndexDefStatement());
@@ -49,12 +50,15 @@ public class PythonRepository {
 		compileAndAddToRepository(interpreter, PythonTransformationHelper.getVDefStatement());
 		compileAndAddToRepository(interpreter, PythonTransformationHelper.getTransformStatement());
 		compileAndAddToRepository(interpreter, PythonTransformationHelper.getSelectionStatement());
+		compileAndAddToRepository(interpreter, PythonTransformationHelper.getModelName());
+		compileAndAddToRepository(interpreter, PythonTransformationHelper.getModelPrefix());
+		compileAndAddToRepository(interpreter, PythonTransformationHelper.getModelBaseUri());
 		initializeInterpreter(interpreter);
 	}
 
 	public PyCode compileAndAddToRepositoryAndExec(PythonInterpreter interpreter, String statement)
 	{
-		PyCode py  = null;
+		PyCode py;
 		if(!scripts.containsKey(statement))
 		{
 			py = compileAndAddToRepository(interpreter,statement);
@@ -67,7 +71,7 @@ public class PythonRepository {
 	}
 	public PyCode compileAndAddToRepository(PythonInterpreter interpreter,
 			String statement) {
-		PyCode py  = null;
+		PyCode py;
 		if(!scripts.containsKey(statement))
 		{
 			py = compile(interpreter, statement);
@@ -94,6 +98,10 @@ public class PythonRepository {
 			interpreter.exec(scripts.get(PythonTransformationHelper.getGetValueFromNestedColumnByIndexDefStatement()));
 			interpreter.exec(scripts.get(PythonTransformationHelper.getRowIndexDefStatement()));
 			interpreter.exec(scripts.get(PythonTransformationHelper.getVDefStatement()));
+			interpreter.exec(scripts.get(PythonTransformationHelper.getModelName()));
+			interpreter.exec(scripts.get(PythonTransformationHelper.getModelPrefix()));
+			interpreter.exec(scripts.get(PythonTransformationHelper.getModelBaseUri()));
+			
 		}
 		if(localsUninitialized ||(!libraryHasBeenLoaded || reloadLibrary))
 		{
@@ -165,8 +173,8 @@ public class PythonRepository {
 
 	public synchronized void resetLibrary()
 	{
-		libraryScripts = new ConcurrentHashMap<String, PyCode>();
-		fileNameTolastTimeRead = new ConcurrentHashMap<String,Long>();		
+		libraryScripts = new ConcurrentHashMap<>();
+		fileNameTolastTimeRead = new ConcurrentHashMap<>();		
 		libraryHasBeenLoaded = false;
 
 	}
@@ -175,8 +183,19 @@ public class PythonRepository {
 		return repositoryPath;
 	}
 
+	private void resetRuntimeLocal() {
+		for (String key : localKeys) {
+			try {
+				this.interpreter.getLocals().__delitem__(key);
+			} catch (Exception e) {
+				//Key is missing, do nothing
+			}
+		}
+	}
+
 	public PythonInterpreter getInterpreter() {
-		interpreter.cleanup();
+		resetRuntimeLocal();
+		//interpreter.cleanup();
 		return this.interpreter;
 	}
 }

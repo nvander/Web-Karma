@@ -44,7 +44,8 @@ public class WorksheetProperties {
 		graphName, serviceUrl, hasServiceProperties, 
 		sourceType, modelUrl, modelRepository, modelContext,
 		baseURI, prefix, graphLabel, inputColumns, 
-		outputColumns, oldCommandHistory
+		outputColumns, oldCommandHistory,
+		GithubURL
 	}
 	
 	public enum SourceTypes {
@@ -52,7 +53,7 @@ public class WorksheetProperties {
 	}
 	
 	public WorksheetProperties() {
-		propertyValueMap = new HashMap<Property, String>();
+		propertyValueMap = new HashMap<>();
 	}
 
 	public void setPropertyValue(Property property, String value) {

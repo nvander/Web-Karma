@@ -51,7 +51,7 @@ public class Table extends RepEntity {
 	private final String hTableId;
 
 	// My rows.
-	private List<Row> rows = new ArrayList<Row>();
+	private List<Row> rows = new ArrayList<>();
 	
 	// mariam
 	/**
@@ -157,7 +157,7 @@ public class Table extends RepEntity {
 	 *         are out of bounds.
 	 */
 	public ArrayList<Row> getRows(int startIndex, int count, SuperSelection sel) {
-		ArrayList<Row> result = new ArrayList<Row>();
+		ArrayList<Row> result = new ArrayList<>();
 		Iterator<Row> itr = rows.iterator();
 		int sum = 0, index = 0;
 		while(itr.hasNext()) {
@@ -195,7 +195,7 @@ public class Table extends RepEntity {
 	 */
 	public boolean collectNodes(HNodePath path, Collection<Node> nodes, SuperSelection sel) {
 		if (nodes == null) {
-			nodes = new ArrayList<Node>();
+			nodes = new ArrayList<>();
 		}
 		return collectNodes(path, nodes, rows, sel);
 	}
@@ -241,7 +241,7 @@ public class Table extends RepEntity {
 
 				List<Row> rowsNestedTable = n.getNestedTable().getRows(0,
 						numRows, sel);
-				if (rowsNestedTable != null && rowsNestedTable.size() != 0) {
+				if (rowsNestedTable != null && !rowsNestedTable.isEmpty()) {
 					setCollectedNodeValues(path.getRest(), nodes,
 							rowsNestedTable, nodeIdx, factory, sel);
 					continue RowIterator;
@@ -273,13 +273,13 @@ public class Table extends RepEntity {
 			// in it.
 			HTable headers = factory.getHTable(hTableId);
 			columnForOrphan = headers.addHNode(HTable.VALUES_COLUMN, factory.getHNode(hNodeIdWhereValueWas).getHNodeType(), factory.getWorksheet(worksheetId), factory);
-			logger.warn("Cannot find 'values' in nested table inside column '"
+			logger.debug("Cannot find 'values' in nested table inside column '"
 					+ factory.getColumnName(hNodeIdWhereValueWas)
 					+ "' Cannot find a column to assign the orphan value '"
 					+ value.asString() + ". Discarding it.");
 		}
 	
-		logger.info("Adding orphan value '" + value.asString()
+		logger.debug("Adding orphan value '" + value.asString()
 				+ "' to column '" + factory.getColumnName(hNodeIdWhereValueWas)
 				+ "'.");
 		newRow.setValue(columnForOrphan.getId(), value,

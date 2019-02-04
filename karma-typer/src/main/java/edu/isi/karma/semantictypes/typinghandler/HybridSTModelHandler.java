@@ -2,6 +2,8 @@ package edu.isi.karma.semantictypes.typinghandler;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -82,18 +84,18 @@ public class HybridSTModelHandler implements ISemanticTypeModelHandler {
 		int countNumeric = 0;
 		
 		// running basic sanity checks in the input arguments
-		if (label == null || label.trim().length() == 0 || examples.size() == 0) {
+		if (label == null || label.trim().length() == 0 || examples.isEmpty()) {
 			logger.warn("@label argument cannot be null or an empty string and the @examples list cannot be empty.");
 			return false;
 		}
 		
 		label = label.trim();
-		ArrayList<String> cleanedExamples = new ArrayList<String>();
+		ArrayList<String> cleanedExamples = new ArrayList<>();
 		countNumeric = cleanedExamplesList(examples, cleanedExamples);
 		
 		// making sure that the condition where the examples list is not empty
 		// but contains junk only is not accepted
-		if (cleanedExamples.size() == 0) {
+		if (cleanedExamples.isEmpty()) {
 			logger.warn("@examples list contains forbidden characters only. The allowed characters are "
 					+ allowedCharacters);
 			return false;
@@ -253,7 +255,7 @@ public class HybridSTModelHandler implements ISemanticTypeModelHandler {
 		}
 
 		// Sanity checks for arguments
-		if (examples == null || examples.size() == 0 || numPredictions <= 0) {
+		if (examples == null || examples.isEmpty() || numPredictions <= 0) {
 			logger.warn("Invalid arguments. Possible problems: examples list size is zero, numPredictions is non-positive");
 			return null;
 		}
@@ -264,6 +266,7 @@ public class HybridSTModelHandler implements ISemanticTypeModelHandler {
 		// decide if test column is textual or numeric
 		boolean isNumeric = false;
 		int countNumeric = 0;
+		
 		for (String example: examples) {
 			if (example.matches(numericRegEx)) {
 				countNumeric++;
@@ -285,7 +288,7 @@ public class HybridSTModelHandler implements ISemanticTypeModelHandler {
 				logger.warn("KS test called");
 				
 				// extract distributions for each trained semantic label
-				Map<String, List<Double>> trainingLabelToExamplesMap = new HashMap<String, List<Double>>();
+				Map<String, List<Double>> trainingLabelToExamplesMap = new HashMap<>();
 				try {
 					IndexReader reader = DirectoryReader.open(FSDirectory.open(new File(
 							getIndexDirectory(isNumeric))));
@@ -293,10 +296,15 @@ public class HybridSTModelHandler implements ISemanticTypeModelHandler {
 						for (int i=0; i<reader.maxDoc(); i++) {
 						    Document doc = reader.document(i);
 						    String label = doc.get(Indexer.LABEL_FIELD_NAME);
-						    List<Double> exampleList = new ArrayList<Double>(); 
+						    List<Double> exampleList = new ArrayList<>(); 
 						    String content = doc.get(Indexer.CONTENT_FIELD_NAME);
 						    for (String example: content.split(" ")) {
-						    	exampleList.add(Double.parseDouble(example));
+						    	try {
+									Number exampleNum = NumberFormat.getNumberInstance(java.util.Locale.US).parse(example);
+									exampleList.add(exampleNum.doubleValue());
+								} catch (ParseException e) {
+									logger.warn("Could not add example:" + example + " for training");
+								}
 						    }
 						    trainingLabelToExamplesMap.put(label, exampleList);
 						}
@@ -308,10 +316,15 @@ public class HybridSTModelHandler implements ISemanticTypeModelHandler {
 				}				
 
 				// extract test column distribution
-				List<Double> testExamples = new ArrayList<Double>();
+				List<Double> testExamples = new ArrayList<>();
 				for (String example: examples) {
 					if(example.matches(numericRegEx)) {
-						testExamples.add(Double.parseDouble(example));
+						try {
+							Number exampleNum = NumberFormat.getNumberInstance(java.util.Locale.US).parse(example);
+							testExamples.add(exampleNum.doubleValue());
+						} catch (ParseException e) {
+							logger.warn("Could not add example:" + example + " for training");
+						}
 					}
 				}				
 
@@ -454,18 +467,18 @@ public class HybridSTModelHandler implements ISemanticTypeModelHandler {
 	 * @return Returns list of allowed Characters
 	 */
 	private ArrayList<String> allowedCharacters() {
-		ArrayList<String> allowed = new ArrayList<String>();
+		ArrayList<String> allowed = new ArrayList<>();
 		// Adding A-Z
 		for (int c = 65; c <= 90; c++) {
-			allowed.add(new Character((char) c).toString());
+			allowed.add(String.valueOf((char) c));
 		}
 		// Adding a-z
 		for (int c = 97; c <= 122; c++) {
-			allowed.add(new Character((char) c).toString());
+			allowed.add(String.valueOf((char) c));
 		}
 		// Adding 0-9
 		for (int c = 48; c <= 57; c++) {
-			allowed.add(new Character((char) c).toString());
+			allowed.add(String.valueOf((char) c));
 		}
 		allowed.add(" "); // adding space
 		allowed.add("."); // adding dot
@@ -490,7 +503,7 @@ public class HybridSTModelHandler implements ISemanticTypeModelHandler {
 
 	public List<String> cleanExamplesNumeric(List<String> exampleList)
 	{
-		List<String> cleanedExamples = new ArrayList<String>();
+		List<String> cleanedExamples = new ArrayList<>();
 		Iterator<String> itr = exampleList.iterator();
 		while(itr.hasNext()) {
 			String ex = itr.next();

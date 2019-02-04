@@ -23,6 +23,8 @@ package edu.isi.karma.util;
 import java.io.BufferedReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Reader;
 import java.util.Iterator;
@@ -37,6 +39,9 @@ import org.slf4j.LoggerFactory;
 public class JSONUtil {
 
 	private static Logger logger = LoggerFactory.getLogger(JSONUtil.class);
+
+	private JSONUtil() {
+	}
 
 	public static String enclose(String x, String delimiter) {
 		return delimiter + x + delimiter;
@@ -246,6 +251,32 @@ public class JSONUtil {
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+
+	}
+	
+	public static Object convertJSONLinesToJSONArray(InputStream is,String encoding) throws Exception{
+		if (encoding == null) {
+			encoding = "UTF-8";
+		}
+		JSONArray jArray = new JSONArray();
+
+		String line = null;
+		try {
+			BufferedReader br = new BufferedReader(new InputStreamReader(is,
+					encoding));
+
+			while ((line = br.readLine()) != null) {
+				jArray.put(new JSONObject(line.trim()));
+			}
+
+			br.close();
+			return jArray;
+		} catch (Exception e) {
+			String message = "Error while reading json lines:" + e.getMessage();
+			if (line != null)
+				message = message + "\n" + line;
+			throw new Exception(message);
 		}
 
 	}

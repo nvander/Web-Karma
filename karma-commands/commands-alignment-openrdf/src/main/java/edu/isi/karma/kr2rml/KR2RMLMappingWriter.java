@@ -126,7 +126,7 @@ public class KR2RMLMappingWriter {
 	
 	protected void initializeURIs()
 	{
-		repoURIs = new HashMap<String, URI>();
+		repoURIs = new HashMap<>();
 		for (String uri : Uris.Uris) {
 			repoURIs.put(uri, f.createURI(uri));
 		}				
@@ -349,7 +349,8 @@ public class KR2RMLMappingWriter {
 		} else {
 			TemplateTermSet objTermSet = pom.getObject().getTemplate();
 			TemplateTermSet rdfLiteralTypeTermSet = pom.getObject().getRdfLiteralType();
-				
+			TemplateTermSet languageTermSet = pom.getObject().getLanguage();
+			
 			if (objTermSet.isSingleColumnTerm()) {
 				BNode cnBnode = f.createBNode();
 				Value cnVal = f.createLiteral(objTermSet.
@@ -367,6 +368,13 @@ public class KR2RMLMappingWriter {
 					}
 
 				}
+				if(languageTermSet != null) {
+					String languageString = languageTermSet.getR2rmlTemplateString(factory);
+					if(!languageString.isEmpty()) {
+						Value cnLanguage = f.createLiteral(languageString);
+						con.add(cnBnode, repoURIs.get(Uris.RR_LANGUAGE_URI), cnLanguage);
+					}
+				}
 				con.add(cnBnode, repoURIs.get(Uris.KM_IS_PART_OF_MAPPING_URI), mappingRes);
 				con.add(mappingRes, repoURIs.get(Uris.KM_HAS_OBJECT_MAP_URI), cnBnode);
 				
@@ -380,9 +388,8 @@ public class KR2RMLMappingWriter {
 				boolean isUri = false;
 				
 				for (TemplateTerm term:objTermSet.getAllTerms()) {
-					if (term instanceof StringTemplateTerm) {
-						if(((StringTemplateTerm)term).hasFullUri())
-							isUri = true;
+					if (term instanceof StringTemplateTerm && ((StringTemplateTerm)term).hasFullUri()) {
+						isUri = true;
 					}
 				}
 						
@@ -410,6 +417,13 @@ public class KR2RMLMappingWriter {
 						con.add(cnBnode, repoURIs.get(Uris.RR_DATATYPE_URI), cnRdfLiteralType);
 					}
 
+				}
+				if(languageTermSet != null) {
+					String languageString = languageTermSet.getR2rmlTemplateString(factory);
+					if(!languageString.isEmpty()) {
+						Value cnLanguage = f.createLiteral(languageString);
+						con.add(cnBnode, repoURIs.get(Uris.RR_LANGUAGE_URI), cnLanguage);
+					}
 				}
 				//con.add(cnBnode, repoURIs.get(Uris.RR_TERM_TYPE_URI), repoURIs.get(Uris.RR_LITERAL_URI));
 				con.add(cnBnode, RDF.TYPE, repoURIs.get(Uris.RR_OBJECTMAP_CLASS_URI));
